@@ -6,7 +6,7 @@ export function renderFooter() {
           
           <div>
             <a href="#/" class="navbar-brand" style="display:inline-block;margin-bottom:var(--space-md);">
-              <img src="img/logo.png" alt="yukk jajan..!" style="height: 60px; width: auto; mix-blend-mode: multiply;">
+              <img src="img/umkm.png" alt="UMKM Kemnaker" style="height: 60px; width: auto; mix-blend-mode: multiply;">
             </a>
             <p class="text-secondary" style="line-height:1.7;margin-bottom:var(--space-lg);">Wadah khusus bagi pegawai Kemnaker dan keluarga untuk berjualan hasil olahan sendiri. Dari pegawai, oleh pegawai, untuk pegawai.</p>
           </div>
@@ -43,7 +43,7 @@ export function renderFooter() {
 
         </div>
         <div class="footer-bottom">
-          deamok &copy; ${new Date().getFullYear()} yukk jajan..!! All rights reserved.
+          deamok &copy; ${new Date().getFullYear()} UMKM Kemnaker
         </div>
       </div>
     </footer>

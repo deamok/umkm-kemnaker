@@ -63,7 +63,7 @@ export async function render() {
                     <div class="hero-content slide-up" style="flex: 1; min-width: 300px;">
                         <span style="color:var(--accent-primary); font-weight:600; text-transform:uppercase; font-size:14px; letter-spacing:1px; margin-bottom:1rem; display:block;">Pasar Digital Pegawai Kemnaker</span>
                         <h1 class="hero-title" style="font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:1.5rem;">Dukung Usaha Teman <br class="hide-mobile">Satu Kantor di <img src="img/logo.png" alt="yukk jajan..!" style="height: 1.1em; width: auto; mix-blend-mode: multiply; display: inline-block; vertical-align: middle; margin-left: 0.2rem;"></h1>
-                        <p class="hero-subtitle" style="color:var(--text-secondary); margin-bottom:2rem; font-size:1.1rem; max-width:500px;">Tempatnya mencari produk-produk hasil kreasi pegawai Kemnaker. Temukan aneka makanan, minuman dan jajanan yang bisa menjadi teman kerja di kantor atau dibawa pulang buat yang tercinta di rumah. Gratis ongkir karena transaksi selesai di kantor!</p>
+                        <p class="hero-subtitle" style="color:var(--text-secondary); margin-bottom:2rem; font-size:1.1rem; max-width:500px;">Tempatnya mencari produk UMKM hasil kreasi pegawai Kemnaker. Temukan aneka makanan, minuman dan jajanan yang bisa menjadi teman kerja di kantor atau dibawa pulang buat yang tercinta di rumah. Gratis ongkir karena transaksi selesai di kantor!</p>
                         <div class="hero-cta" style="display:flex; gap:1rem;">
                             <a href="#/products" class="btn btn-primary btn-lg" style="background:var(--accent-primary); border:none; border-radius:var(--radius-full); padding:0.75rem 2rem;">
                                 Belanja Sekarang
@@ -145,7 +145,7 @@ export async function render() {
                 <div class="container">
                     <div class="card slide-up" style="background:var(--gradient-hero);border:none;padding:var(--space-3xl);text-align:center;">
                         <h2 class="font-heading" style="font-size:var(--text-3xl);color:white;margin-bottom:var(--space-md);">Mulai Jualan Sekarang!</h2>
-                        <p style="color:rgba(255,255,255,0.8);max-width:500px;margin:0 auto var(--space-xl);">Buka warung gratis dan mulai jual serta pasarkan produk-mu ke seluruh rekan pegawai Kemnaker.</p>
+                        <p style="color:rgba(255,255,255,0.8);max-width:500px;margin:0 auto var(--space-xl);">Buka warung gratis dan mulai jual serta pasarkan produk UMKM-mu ke seluruh rekan pegawai Kemnaker.</p>
                         <button class="btn btn-secondary btn-lg" id="btn-cta-sell" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);">
                             <i data-lucide="rocket" style="width:20px;height:20px;"></i> Buka Warung-mu Sekarang
                         </button>
