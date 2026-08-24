@@ -10,7 +10,7 @@ export function render() {
             <div class="auth-card card p-6" style="width: 100%; max-width: 21rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
                 <div class="text-center" style="margin-bottom: 25px;">
                     <h2 class="auth-title text-3xl font-extrabold text-gray-800" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
-                        Masuk ke <img src="img/logo.png" alt="yukk jajan..!" style="height: 2.25rem; width: auto; vertical-align: middle;">
+                        Masuk ke <img src="img/umkm.png" alt="UMKM Kemnaker" style="height: 2.25rem; width: auto; vertical-align: middle;">
                     </h2>
                     <p class="text-muted" style="margin: 0; padding: 0; font-size: 14px;">Selamat datang kembali!</p>
                 </div>

@@ -80,7 +80,7 @@ export async function renderNavbar() {
       <div class="navbar-middle-header container flex-between align-center py-4 relative" style="position: relative; gap: 1rem;">
         <!-- Logo -->
         <a href="#/" style="display:flex; align-items:center; flex-shrink: 0;">
-          <img src="img/logo.png" alt="yukk jajan..!" style="height: 38px; width: auto; mix-blend-mode: multiply;">
+          <img src="img/umkm.png" alt="UMKM Kemnaker" style="height: 38px; width: auto; mix-blend-mode: multiply;">
         </a>
 
         <!-- Desktop Search (Hidden on Mobile) -->

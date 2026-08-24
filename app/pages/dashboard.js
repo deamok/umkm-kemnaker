@@ -73,7 +73,7 @@ export async function render(params) {
                 <div class="card border-0">
                     <div class="card-body p-5 text-center">
                         <div class="flex justify-center mx-auto mb-4" style="max-width: 150px; display: flex; justify-content: center; align-items: center;">
-                            <img src="img/logo.png" alt="yukk jajan..!" style="max-height: 50px; width: auto; mix-blend-mode: multiply;">
+                            <img src="img/umkm.png" alt="UMKM Kemnaker" style="max-height: 50px; width: auto; mix-blend-mode: multiply;">
                         </div>
                         <h1 class="text-2xl font-heading font-bold mb-2">Buka Warung Anda</h1>
                         <p class="text-muted mb-5">Mulai pasarkan produk kreasi Anda ke seluruh pegawai Kemnaker sekarang juga!</p>
