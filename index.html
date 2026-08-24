@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="e-Lapak - Marketplace produk UMKM terbaik. Jual beli makanan, minuman, kerajinan dan produk UMKM lainnya.">
+    <title>yukk jajan..! - Marketplace Pegawai Kemnaker</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/variables.css?v=8">
+    <link rel="stylesheet" href="css/base.css?v=8">
+    <link rel="stylesheet" href="css/components.css?v=8">
+    <link rel="stylesheet" href="css/pages.css?v=8">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Initial Theme Setup -->
+    <script>
+        localStorage.setItem('elapak_theme', 'light');
+        document.documentElement.setAttribute('data-theme', 'light');
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- SPA content rendered by JS -->
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+            <div class="text-center fade-in">
+                <div style="font-size:3rem;margin-bottom:1rem;">🛍️</div>
+                <p style="color:var(--text-secondary);">Memuat yukk jajan..!</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container" class="toast-container"></div>
+    <div id="modal-container"></div>
+    
+    <script type="module" src="app/app.js?v=9"></script>
+</body>
+</html>

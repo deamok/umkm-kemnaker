@@ -1,0 +1,650 @@
+/* PAGE SPECIFIC STYLES */
+
+/* 1. AUTH PAGES */
+.auth-page {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+.auth-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  max-width: 420px;
+  width: 100%;
+  padding: 2.5rem;
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-lg);
+}
+.auth-title {
+  text-align: center;
+  font-family: var(--font-heading);
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: var(--space-xl);
+  font-size: var(--text-2xl);
+}
+.auth-footer {
+  text-align: center;
+  font-size: var(--text-sm);
+  margin-top: var(--space-lg);
+  color: var(--text-secondary);
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  margin: var(--space-lg) 0;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-glass);
+}
+.auth-divider::before { margin-right: .5em; }
+.auth-divider::after { margin-left: .5em; }
+
+/* 2. HOME SECTIONS */
+.section {
+  padding: 4rem 0;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+.section-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+}
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+@media (min-width: 768px) {
+  .category-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.category-card {
+  text-align: center;
+  padding: 2rem;
+  cursor: pointer;
+}
+.category-card:hover {
+  border-color: var(--accent-primary);
+  background: var(--gradient-card);
+}
+.category-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+.category-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+}
+
+/* 3. CART PAGE */
+.cart-page {
+  padding-top: var(--space-xl);
+}
+.cart-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+@media (min-width: 992px) {
+  .cart-layout { grid-template-columns: 2fr 1fr; }
+}
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.cart-item {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+.cart-item-image {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+.cart-item-info {
+  flex-grow: 1;
+}
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-sm);
+}
+.cart-qty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.cart-summary {
+  padding: var(--space-lg);
+  position: sticky;
+  top: 90px;
+}
+.cart-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+}
+.cart-summary-total {
+  font-weight: bold;
+  font-size: var(--text-xl);
+  color: var(--accent-warm);
+  border-top: 1px solid var(--border-glass);
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* 4. CHECKOUT PAGE */
+.checkout-page {
+  padding-top: var(--space-xl);
+}
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+@media (min-width: 992px) {
+  .checkout-layout { grid-template-columns: 3fr 2fr; }
+}
+.checkout-section {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+.checkout-section-title {
+  font-family: var(--font-heading);
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.payment-option {
+  padding: var(--space-md);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+.payment-option.selected {
+  border-color: var(--accent-primary);
+  background: var(--bg-glass-hover);
+}
+.payment-option-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-glass);
+}
+.payment-option.selected .payment-option-radio {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+  box-shadow: inset 0 0 0 4px var(--bg-secondary);
+}
+
+/* 5. LAPAK PAGE */
+.lapak-header {
+  position: relative;
+  min-height: 250px;
+  margin-bottom: var(--space-2xl);
+}
+.lapak-banner {
+  width: 100%;
+  height: 200px;
+  background: var(--gradient-hero);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.lapak-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 4px solid var(--bg-primary);
+  position: absolute;
+  bottom: -20px;
+  left: var(--space-xl);
+  background: var(--bg-secondary);
+  object-fit: cover;
+}
+.lapak-info {
+  padding: var(--space-xl) var(--space-xl) 0;
+}
+.lapak-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-xs);
+}
+.lapak-desc {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+.lapak-stats {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+/* 6. DASHBOARD */
+.dashboard {
+  padding-top: var(--space-xl);
+}
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+.dashboard-stats {
+  /* uses grid-4 */
+}
+.dashboard-section {
+  margin-top: var(--space-2xl);
+}
+.product-form {
+  padding: var(--space-xl);
+  max-width: 600px;
+  margin: 0 auto;
+}
+.product-list-item {
+  display: flex;
+  padding: var(--space-md);
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+  align-items: center;
+}
+.product-list-item-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+/* 7. ORDERS */
+.order-card {
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-glass);
+}
+.order-id {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.order-status {
+  /* inherits badge */
+}
+.order-status.pending { background: rgba(253, 203, 110, 0.2); color: var(--warning); }
+.order-status.processing { background: rgba(116, 185, 255, 0.2); color: var(--info); }
+.order-status.shipped { background: rgba(0, 206, 201, 0.2); color: var(--accent-secondary); }
+.order-status.completed { background: rgba(0, 184, 148, 0.2); color: var(--success); }
+.order-status.cancelled { background: rgba(225, 112, 85, 0.2); color: var(--danger); }
+.order-items {
+  padding: var(--space-md) 0;
+}
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-glass);
+}
+
+/* 8. PROFILE */
+.profile-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding-top: var(--space-xl);
+}
+.profile-header {
+  display: flex;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  align-items: center;
+}
+@media (max-width: 767px) {
+  .profile-header { flex-direction: column; text-align: center; }
+}
+.profile-avatar-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-primary);
+}
+.profile-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-xs);
+}
+.profile-section {
+  padding: var(--space-xl);
+  margin-top: var(--space-lg);
+}
+.profile-section-title {
+  font-family: var(--font-heading);
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+/* 9. PRODUCTS CATALOG */
+.catalog-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+@media (min-width: 768px) {
+  .catalog-header { flex-direction: row; justify-content: space-between; align-items: center; }
+}
+.catalog-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+@media (min-width: 992px) {
+  .catalog-layout { flex-direction: row; }
+}
+.catalog-sidebar {
+  width: 100%;
+}
+@media (min-width: 992px) {
+  .catalog-sidebar { width: 250px; flex-shrink: 0; }
+}
+.catalog-content {
+  flex-grow: 1;
+}
+
+/* 10. PRODUCT DETAIL */
+.product-detail {
+  padding-top: var(--space-xl);
+}
+.product-detail-image-container {
+  height: 300px;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .product-detail-image-container {
+    height: 500px;
+  }
+}
+.product-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+@media (min-width: 768px) {
+  .product-detail-layout { grid-template-columns: 1fr 1fr; }
+}
+.product-detail-image {
+  border-radius: var(--radius-lg);
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  width: 100%;
+}
+.product-detail-info {
+  padding: var(--space-md) 0;
+}
+.product-detail-name {
+  font-size: var(--text-3xl);
+  font-family: var(--font-heading);
+  margin-bottom: var(--space-sm);
+}
+.product-detail-price {
+  font-size: var(--text-2xl);
+  color: var(--accent-warm);
+  font-weight: bold;
+  margin-bottom: var(--space-lg);
+}
+.product-detail-desc {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: var(--space-xl);
+}
+.product-detail-seller {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+.product-detail-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+}
+.product-qty-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+}
+
+.dashboard-products-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .dashboard-products-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile Spacing Optimizations (Batas Minimal) */
+@media (max-width: 767px) {
+  /* Reduce general container and section paddings */
+  .container {
+    padding: 0 0.8rem !important;
+  }
+  .section {
+    padding: 1.5rem 0 !important;
+  }
+  
+  /* Reduce grid gaps for product catalogs */
+  .grid-4,
+  .dashboard-products-list {
+    gap: 0.4rem !important;
+  }
+  
+  /* Compact Customer Product Cards */
+  .product-card .product-info {
+    padding: 0.5rem !important;
+  }
+  .product-card .product-info .mb-1 {
+    margin-bottom: 0.25rem !important;
+  }
+  .product-card .product-info .mb-2 {
+    margin-bottom: 0.35rem !important;
+  }
+  .product-card .product-info .product-name {
+    font-size: 0.85rem !important;
+    margin-bottom: 2px !important;
+  }
+  .product-card .product-info .product-price {
+    font-size: 0.9rem !important;
+  }
+  .product-card .product-info .product-seller {
+    margin-top: 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Compact Dashboard Product Cards */
+  .dashboard-products-list .product-list-item {
+    margin-bottom: 0 !important;
+    gap: 0 !important;
+  }
+  .dashboard-products-list .product-list-item > div:last-child {
+    padding: 0.5rem !important;
+  }
+  .dashboard-products-list .product-list-item .flex-shrink-0 {
+    height: auto !important;
+    aspect-ratio: 4 / 3 !important;
+  }
+  .dashboard-products-list .product-list-item .mb-1,
+  .dashboard-products-list .product-list-item .mb-2,
+  .dashboard-products-list .product-list-item .mb-1.5 {
+    margin-bottom: 0.25rem !important;
+  }
+  .dashboard-products-list .product-list-item .font-bold.text-gray-800 {
+    font-size: 0.85rem !important;
+    margin-bottom: 2px !important;
+  }
+  .dashboard-products-list .product-list-item .font-bold.text-md {
+    font-size: 0.9rem !important;
+  }
+  .dashboard-products-list .product-list-item .py-1 {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+  }
+
+  /* Lapak detail page styles */
+  .lapak-detail-avatar {
+    width: 6rem !important;
+    height: 6rem !important;
+    margin-top: -2.5rem !important;
+  }
+  .lapak-page .card {
+    padding: 1rem !important;
+  }
+  .lapak-name {
+    font-size: 1.4rem !important;
+  }
+  .lapak-desc {
+    font-size: 0.85rem !important;
+  }
+}
+
+/* ========================
+   CHAT PAGES
+   ======================== */
+
+/* Inbox Chat Page */
+.chats-page {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-glass);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.chat-item:hover {
+  background-color: var(--bg-primary);
+}
+.chat-item:last-child {
+  border-bottom: none;
+}
+
+.chat-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--accent-primary);
+  color: white;
+  font-weight: 700;
+}
+
+.chat-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* Chat Room Page */
+.chat-room-page {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.chat-room-page .card {
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+#chat-messages-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for chat */
+#chat-messages-container::-webkit-scrollbar {
+  width: 4px;
+}
+#chat-messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+#chat-messages-container::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 4px;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 0.65rem 1rem;
+  border-radius: 14px;
+  position: relative;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.chat-input-footer {
+  border-top: 1px solid var(--border-glass);
+  background-color: var(--bg-secondary);
+  padding: 0.9rem 1.25rem;
+}
+
+#chat-message-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+}
+
+/* Responsive chat */
+@media (max-width: 768px) {
+  .chat-room-page .card {
+    height: calc(100vh - 200px);
+    min-height: 400px;
+    border-radius: var(--radius-md);
+  }
+
+  .message-bubble {
+    max-width: 88%;
+  }
+}
