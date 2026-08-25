@@ -189,7 +189,7 @@ export function afterRender(params) {
                                     const resetLink = `https://yuuk-jajan.cilebut-one.cloud/#/login?reset=${user.id}&token=${resetToken}`;
                                     const text = `Halo Kak *${user.name}*,\n\nSilakan klik tautan berikut untuk mengubah kata sandi akun e-lapak Anda:\n\n${resetLink}\n\nAbaikan pesan ini jika Anda tidak merasa meminta reset kata sandi.`;
                                     
-                                    await fetch(`https://wa.cilebut-one.cloud/message/sendText/bot`, {
+                                    await fetch(`/wa-api/message/sendText/bot`, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',

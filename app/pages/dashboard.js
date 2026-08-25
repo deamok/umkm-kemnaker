@@ -847,7 +847,7 @@ export async function afterRender(params) {
                             
                             if (text) {
                                 
-                                await fetch(`https://wa.cilebut-one.cloud/message/sendText/bot`, {
+                                await fetch(`/wa-api/message/sendText/bot`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',

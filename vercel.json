@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/wa-api/:match*",
+      "destination": "https://wa.cilebut-one.cloud/:match*"
+    }
+  ]
+}
