@@ -846,8 +846,7 @@ export async function afterRender(params) {
                             }
                             
                             if (text) {
-                                
-                                await fetch(`/wa-api/message/sendText/umkm_vercel-app`, {
+                                const res = await fetch(`/wa-api/message/sendText/umkm_vercel-app`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -855,7 +854,11 @@ export async function afterRender(params) {
                                     },
                                     body: JSON.stringify({ number: phone, textMessage: { text: text } })
                                 });
+                                const resData = await res.json().catch(() => ({}));
+                                console.log('Evolution API Response (Dashboard Status Update):', res.status, resData);
                             }
+                        } else {
+                            console.warn('⚠️ Tidak dapat mengirim WA: Nomor HP pembeli tidak ditemukan atau kosong.');
                         }
                     }
                 } catch(err) {

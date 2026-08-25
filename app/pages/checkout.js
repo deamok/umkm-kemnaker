@@ -586,7 +586,7 @@ ${itemList}
 Silakan cek & proses pesanan di:
 🔗 https://yuuk-jajan.cilebut-one.cloud/#/dashboard`;
 
-                    await fetch(`/wa-api/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    const res = await fetch(`/wa-api/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -594,6 +594,8 @@ Silakan cek & proses pesanan di:
                         },
                         body: JSON.stringify({ number: phone, textMessage: { text: message } })
                     });
+                    const resData = await res.json().catch(() => ({}));
+                    console.log('Evolution API Response (Checkout):', res.status, resData);
                 } catch (err) {
                     console.warn('WA notification gagal (non-critical):', err.message);
                 }
@@ -647,11 +649,25 @@ Silakan cek & proses pesanan di:
                     });
 
                     // Kirim notifikasi WA ke penjual (non-blocking)
+                    let sellerPhone = null;
+                    let sellerName = 'Penjual';
+
                     const sellerData = await Store.getUser(sellerId);
                     if (sellerData?.phone) {
+                        sellerPhone = sellerData.phone;
+                        sellerName = sellerData.name || sellerName;
+                    } else {
+                        const lapakData = await Store.getLapak(sellerId);
+                        if (lapakData?.phone) {
+                            sellerPhone = lapakData.phone;
+                            sellerName = lapakData.name || sellerName;
+                        }
+                    }
+
+                    if (sellerPhone) {
                         sendWANotification(
-                            sellerData.phone,
-                            sellerData.name,
+                            sellerPhone,
+                            sellerName,
                             customOrderId,
                             items,
                             totalPrice,
@@ -659,6 +675,8 @@ Silakan cek & proses pesanan di:
                             fullAddress,
                             paymentMethodLabel
                         );
+                    } else {
+                        console.warn('⚠️ Tidak dapat mengirim WA: Nomor HP penjual tidak ditemukan untuk sellerId:', sellerId);
                     }
                 }
 
