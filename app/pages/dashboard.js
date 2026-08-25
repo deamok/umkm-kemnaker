@@ -847,11 +847,11 @@ export async function afterRender(params) {
                             
                             if (text) {
                                 
-                                await fetch(`/wa-api/message/sendText/bot`, {
+                                await fetch(`/wa-api/message/sendText/umkm_vercel-app`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'apikey': 'odoo-wa-secret-key-2024'
+                                        'apikey': 'cilebut-ONE.server:2026'
                                     },
                                     body: JSON.stringify({ number: phone, textMessage: { text: text } })
                                 });

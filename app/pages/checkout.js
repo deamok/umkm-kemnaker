@@ -561,8 +561,8 @@ export async function afterRender(params) {
             const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel) => {
                 try {
                     const EVOLUTION_URL = '';  // Kosong = pakai proxy nginx /wa-api/
-                    const EVOLUTION_APIKEY = 'odoo-wa-secret-key-2024';
-                    const EVOLUTION_INSTANCE = 'bot';
+                    const EVOLUTION_APIKEY = 'cilebut-ONE.server:2026';
+                    const EVOLUTION_INSTANCE = 'umkm_vercel-app';
 
                     // Format nomor: hilangkan 0 di awal, tambah 62
                     let phone = String(sellerPhone).replace(/\D/g, '');
