@@ -200,7 +200,49 @@ git push origin main
 
 ---
 
-## 7. Troubleshooting & FAQ
+## 7. Panduan Full Backup & Restore
+
+Sistem menyediakan script otomatis untuk mencadangkan dan memulihkan seluruh ekosistem:
+
+### A. Melakukan Full Backup
+Jalankan salah satu cara berikut:
+* **Cara Cepat**: Klik 2x file `backup.bat` di Windows Explorer.
+* **Via Terminal**:
+  ```bash
+  python backup.py
+  ```
+**Data yang Dicadangkan:**
+1. **Database Firestore**: Seluruh koleksi (`users`, `lapaks`, `products`, `orders`, `chats`) diekspor menjadi format JSON.
+2. **Sesi WhatsApp (Evolution API)**: Mengarsip volume Docker `evolution_instances` dan `evolution_store` dari server remote (`192.168.1.12`).
+3. **Source Code & Konfigurasi**: Mengarsip kode aplikasi web ke dalam format ZIP.
+*Hasil backup disimpan di folder `backups/backup_YYYYMMDD_HHMMSS.zip`.*
+
+---
+
+### B. Melakukan Restore
+Jalankan salah satu cara berikut:
+* **Cara Cepat**: Klik 2x file `restore.bat` di Windows Explorer.
+* **Via Terminal**:
+  ```bash
+  # Mode interaktif (pilih backup terbaru & komponen yang ingin dipulihkan):
+  python restore.py
+
+  # Restore semua komponen otomatis:
+  python restore.py --all
+
+  # Hanya restore Database Firestore:
+  python restore.py --db
+
+  # Hanya restore Source Code:
+  python restore.py --code
+
+  # Hanya restore Sesi WhatsApp Evolution API di server:
+  python restore.py --evolution
+  ```
+
+---
+
+## 8. Troubleshooting & FAQ
 
 ### Q: Kenapa status pesan WhatsApp tidak terkirim / Error 403?
 * **Penyebab**: Proxy Cloudflare memblokir IP Datacenter Vercel (Bot Fight Mode) atau token API salah.
@@ -220,3 +262,4 @@ curl -X GET https://wa.cilebut-one.cloud/instance/fetchInstances \
   -H "apikey: cilebut-ONE.server:2026"
 ```
 Pastikan properti `"status"` bernilai `"open"`.
+

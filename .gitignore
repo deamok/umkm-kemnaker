@@ -1,0 +1,13 @@
+# Backups
+backups/
+*.zip
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment & Temp
+.env
+.DS_Store
+Thumbs.db
