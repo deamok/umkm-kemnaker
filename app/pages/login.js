@@ -193,12 +193,12 @@ export function afterRender(params) {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
-                                            'apikey': 'cilebut-ONE.server:2026'
+                                            'apikey': 'cqpj5ch0avno6u7w0z67b'
                                         },
                                         body: JSON.stringify({ number: waPhone, textMessage: { text: text } })
                                     });
                                     const resData = await res.json().catch(() => ({}));
-                                    console.log('Evolution API Response (Forgot Password):', res.status, resData);
+                                    console.log('Evolution API Response (Forgot Password):', res.status, JSON.stringify(resData));
                                 } catch(err) {
                                     console.error('Gagal kirim WA forgot password:', err);
                                 }

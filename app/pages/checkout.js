@@ -561,7 +561,7 @@ export async function afterRender(params) {
             const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel) => {
                 try {
                     const EVOLUTION_URL = '';  // Kosong = pakai proxy nginx /wa-api/
-                    const EVOLUTION_APIKEY = 'cilebut-ONE.server:2026';
+                    const EVOLUTION_APIKEY = 'cqpj5ch0avno6u7w0z67b';
                     const EVOLUTION_INSTANCE = 'umkm_vercel-app';
 
                     // Format nomor: hilangkan 0 di awal, tambah 62
@@ -595,7 +595,7 @@ Silakan cek & proses pesanan di:
                         body: JSON.stringify({ number: phone, textMessage: { text: message } })
                     });
                     const resData = await res.json().catch(() => ({}));
-                    console.log('Evolution API Response (Checkout):', res.status, resData);
+                    console.log('Evolution API Response (Checkout):', res.status, JSON.stringify(resData));
                 } catch (err) {
                     console.warn('WA notification gagal (non-critical):', err.message);
                 }

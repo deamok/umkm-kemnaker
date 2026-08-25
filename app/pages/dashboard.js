@@ -850,12 +850,12 @@ export async function afterRender(params) {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'apikey': 'cilebut-ONE.server:2026'
+                                        'apikey': 'cqpj5ch0avno6u7w0z67b'
                                     },
                                     body: JSON.stringify({ number: phone, textMessage: { text: text } })
                                 });
                                 const resData = await res.json().catch(() => ({}));
-                                console.log('Evolution API Response (Dashboard Status Update):', res.status, resData);
+                                console.log('Evolution API Response (Dashboard Status Update):', res.status, JSON.stringify(resData));
                             }
                         } else {
                             console.warn('⚠️ Tidak dapat mengirim WA: Nomor HP pembeli tidak ditemukan atau kosong.');
