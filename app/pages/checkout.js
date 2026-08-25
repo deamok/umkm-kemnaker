@@ -586,7 +586,7 @@ ${itemList}
 Silakan cek & proses pesanan di:
 🔗 https://yuuk-jajan.cilebut-one.cloud/#/dashboard`;
 
-                    await fetch(`/wa-api/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    await fetch(`https://wa.cilebut-one.cloud/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
