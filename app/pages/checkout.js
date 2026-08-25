@@ -560,7 +560,7 @@ export async function afterRender(params) {
             // Kirim notifikasi WhatsApp ke penjual via Evolution API (melalui nginx proxy)
             const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel) => {
                 try {
-                    const EVOLUTION_URL = '';  // Kosong = pakai proxy nginx /wa-api/
+                    const EVOLUTION_URL = 'https://wa.cilebut-one.cloud';
                     const EVOLUTION_APIKEY = 'cqpj5ch0avno6u7w0z67b';
                     const EVOLUTION_INSTANCE = 'umkm_vercel-app';
 
@@ -586,7 +586,7 @@ ${itemList}
 Silakan cek & proses pesanan di:
 🔗 https://yuuk-jajan.cilebut-one.cloud/#/dashboard`;
 
-                    const res = await fetch(`/wa-api/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

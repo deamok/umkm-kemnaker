@@ -846,7 +846,7 @@ export async function afterRender(params) {
                             }
                             
                             if (text) {
-                                const res = await fetch(`/wa-api/message/sendText/umkm_vercel-app`, {
+                                const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/umkm_vercel-app`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
