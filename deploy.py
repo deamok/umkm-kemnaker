@@ -43,8 +43,9 @@ def sftp_upload_dir(sftp, local_dir, remote_dir):
     except FileNotFoundError:
         sftp.mkdir(remote_dir)
 
+    ignored = {'.git', 'node_modules', '__pycache__', 'deploy.py', 'deploy.ps1', 'check_docker.py', 'check_npm.py', 'jalankan_lokal.bat', 'upload_ke_server.bat', 'start_local.ps1'}
     for item in os.listdir(local_dir):
-        if item in ['.git', 'node_modules', 'deploy.py']:
+        if item in ignored or item.endswith('.lnk') or item.endswith('.pyc'):
             continue
         
         local_path = os.path.join(local_dir, item)

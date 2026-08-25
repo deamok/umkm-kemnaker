@@ -7,3 +7,8 @@ Dockerfile
 docker-compose.yml
 .env
 README.md
+*.py
+*.bat
+*.ps1
+check_*.py
+deploy.*
