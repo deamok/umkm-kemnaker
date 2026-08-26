@@ -557,18 +557,21 @@ export async function afterRender(params) {
                 }
             }
 
-            // Kirim notifikasi WhatsApp ke penjual via Evolution API (melalui nginx proxy)
-            const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel) => {
+            // Kirim notifikasi WhatsApp ke penjual & pembeli via Evolution API
+            const EVOLUTION_URL = 'https://wa.cilebut-one.cloud';
+            const EVOLUTION_APIKEY = 'cqpj5ch0avno6u7w0z67b';
+            const EVOLUTION_INSTANCE = 'umkm_vercel-app';
+
+            const formatWAPhone = (rawPhone) => {
+                let phone = String(rawPhone || '').replace(/\D/g, '');
+                if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+                if (!phone.startsWith('62')) phone = '62' + phone;
+                return phone;
+            };
+
+            const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel, paymentProof = null) => {
                 try {
-                    const EVOLUTION_URL = 'https://wa.cilebut-one.cloud';
-                    const EVOLUTION_APIKEY = 'cqpj5ch0avno6u7w0z67b';
-                    const EVOLUTION_INSTANCE = 'umkm_vercel-app';
-
-                    // Format nomor: hilangkan 0 di awal, tambah 62
-                    let phone = String(sellerPhone).replace(/\D/g, '');
-                    if (phone.startsWith('0')) phone = '62' + phone.slice(1);
-                    if (!phone.startsWith('62')) phone = '62' + phone;
-
+                    const phone = formatWAPhone(sellerPhone);
                     const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${it.price.toLocaleString('id-ID')}`).join('\n');
                     const message = 
 `🛒 *PESANAN BARU MASUK!*
@@ -584,7 +587,69 @@ ${itemList}
 💰 *Total: Rp ${totalPrice.toLocaleString('id-ID')}*
 ━━━━━━━━━━━━━━━━━━━━
 Silakan cek & proses pesanan di:
-🔗 https://yuuk-jajan.cilebut-one.cloud/#/dashboard`;
+🔗 https://umkm-kemnaker.vercel.app/#/dashboard`;
+
+                    // 1. Kirim pesan teks rincian pesanan ke penjual
+                    const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': EVOLUTION_APIKEY
+                        },
+                        body: JSON.stringify({ number: phone, textMessage: { text: message } })
+                    });
+                    const resData = await res.json().catch(() => ({}));
+                    console.log('Evolution API Response (Seller Text):', res.status, JSON.stringify(resData));
+
+                    // 2. Jika ada bukti pembayaran (Transfer / QRIS), kirim gambar bukti ke penjual
+                    if (paymentProof) {
+                        const cleanBase64 = paymentProof.includes(',') ? paymentProof.split(',')[1] : paymentProof;
+                        const mediaRes = await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': EVOLUTION_APIKEY
+                            },
+                            body: JSON.stringify({
+                                number: phone,
+                                mediaMessage: {
+                                    mediatype: 'image',
+                                    caption: `🧾 *Bukti Pembayaran:* ${orderId} (${paymentMethodLabel})`,
+                                    media: cleanBase64
+                                }
+                            })
+                        });
+                        const mediaData = await mediaRes.json().catch(() => ({}));
+                        console.log('Evolution API Response (Seller Proof Image):', mediaRes.status, JSON.stringify(mediaData));
+                    }
+                } catch (err) {
+                    console.warn('WA seller notification gagal (non-critical):', err.message);
+                }
+            };
+
+            const sendBuyerWANotification = async (buyerPhone, buyerName, sellerName, orderId, items, totalPrice, deliveryInfo, paymentMethodLabel) => {
+                try {
+                    const phone = formatWAPhone(buyerPhone);
+                    const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${it.price.toLocaleString('id-ID')}`).join('\n');
+                    const message = 
+`Halo Kak *${buyerName}*,
+
+Terima kasih banyak sudah jajan di *UMKM Pegawai Kemnaker*! 🙏
+
+📋 *No. Pesanan:* ${orderId}
+🏪 *Warung/Penjual:* ${sellerName}
+💳 *Pembayaran:* ${paymentMethodLabel}
+📦 *Pengiriman:* ${deliveryInfo}
+
+🧾 *Detail Pesanan:*
+${itemList}
+
+💰 *Total: Rp ${totalPrice.toLocaleString('id-ID')}*
+━━━━━━━━━━━━━━━━━━━━
+Pesanan Kakak telah kami teruskan ke pihak penjual. Mohon kesediaannya untuk menunggu respon dan konfirmasi pesanan dari penjual ya Kak.
+
+Pantau status pesanan Kakak di sini:
+🔗 https://umkm-kemnaker.vercel.app/#/orders`;
 
                     const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
@@ -595,9 +660,9 @@ Silakan cek & proses pesanan di:
                         body: JSON.stringify({ number: phone, textMessage: { text: message } })
                     });
                     const resData = await res.json().catch(() => ({}));
-                    console.log('Evolution API Response (Checkout):', res.status, JSON.stringify(resData));
+                    console.log('Evolution API Response (Buyer Text):', res.status, JSON.stringify(resData));
                 } catch (err) {
-                    console.warn('WA notification gagal (non-critical):', err.message);
+                    console.warn('WA buyer notification gagal (non-critical):', err.message);
                 }
             };
 
@@ -648,7 +713,7 @@ Silakan cek & proses pesanan di:
                         status: 'pending'
                     });
 
-                    // Kirim notifikasi WA ke penjual (non-blocking)
+                    // Ambil data penjual & lapak
                     let sellerPhone = null;
                     let sellerName = 'Penjual';
 
@@ -664,6 +729,7 @@ Silakan cek & proses pesanan di:
                         }
                     }
 
+                    // 1. Kirim notifikasi WA ke penjual (+ bukti bayar transfer/QRIS jika ada)
                     if (sellerPhone) {
                         await sendWANotification(
                             sellerPhone,
@@ -673,10 +739,26 @@ Silakan cek & proses pesanan di:
                             totalPrice,
                             user.name,
                             fullAddress,
-                            paymentMethodLabel
+                            paymentMethodLabel,
+                            paymentProof
                         );
                     } else {
                         console.warn('⚠️ Tidak dapat mengirim WA: Nomor HP penjual tidak ditemukan untuk sellerId:', sellerId);
+                    }
+
+                    // 2. Kirim notifikasi WA ke pembeli (ucapan terima kasih & mohon tunggu respon penjual)
+                    const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
+                    if (buyerPhone) {
+                        await sendBuyerWANotification(
+                            buyerPhone,
+                            user.name,
+                            sellerName,
+                            customOrderId,
+                            items,
+                            totalPrice,
+                            fullAddress,
+                            paymentMethodLabel
+                        );
                     }
                 }
 

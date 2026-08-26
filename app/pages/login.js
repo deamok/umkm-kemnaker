@@ -186,7 +186,7 @@ export function afterRender(params) {
                                     const resetToken = Math.random().toString(36).substring(2, 15);
                                     await Store.updateUser(user.id, { resetToken: resetToken });
                                     
-                                    const resetLink = `https://yuuk-jajan.cilebut-one.cloud/#/login?reset=${user.id}&token=${resetToken}`;
+                                    const resetLink = `https://umkm-kemnaker.vercel.app/#/login?reset=${user.id}&token=${resetToken}`;
                                     const text = `Halo Kak *${user.name}*,\n\nSilakan klik tautan berikut untuk mengubah kata sandi akun e-lapak Anda:\n\n${resetLink}\n\nAbaikan pesan ini jika Anda tidak merasa meminta reset kata sandi.`;
                                     
                                     const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/umkm_vercel-app`, {

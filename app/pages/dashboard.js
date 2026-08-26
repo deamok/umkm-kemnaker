@@ -178,72 +178,93 @@ export async function render(params) {
         </div>
     `;
 
-    const renderSellerOrderCard = async (order) => {
+    const renderSellerOrderRow = async (order, index) => {
         const buyer = await Store.getUser(order.buyerId) || { name: 'Pembeli' };
 
         // Format tanggal yang sudah tersimpan sebelumnya jika ada
         const savedDate = order.estimatedDelivery || '';
-        const formattedSavedDate = savedDate ? new Date(savedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        const formattedSavedDate = savedDate ? new Date(savedDate).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
         // Tombol aksi pesanan
         const processBtnDisabled = (order.status === 'pending' && (!savedDate || !order.deliveryTime)) ? 'disabled' : '';
 
+        const statusMap = {
+            'pending': 'menunggu',
+            'processing': 'proses',
+            'shipped': 'kirim',
+            'completed': 'selesai',
+            'cancelled': 'dibatalkan'
+        };
+        const displayStatus = statusMap[order.status] || order.status;
+
         return `
-            <div class="order-card card mb-4 overflow-hidden border">
-                <div class="p-4 border-b flex flex-col flex-row flex-between items-start md:items-center gap-2">
-                    <div>
-                        <div class="font-semibold">${buyer.name}</div>
-                        <div class="text-xs text-muted">ID: #${order.id.substring(0,8)} • ${timeAgo(order.createdAt)}</div>
-                    </div>
-                    <div class="badge px-3 py-1 text-xs font-semibold capitalize text-secondary" style="border-radius: var(--radius-full);">${order.status}</div>
-                </div>
-                <div class="p-4">
-                    <div class="text-sm space-y-1 mb-3">
-                        ${order.items.map(i => `<div>${i.qty}x ${i.name} - ${formatRupiah(i.price)}</div>`).join('')}
-                    </div>
-                    <div class="font-bold text-lg mb-4 text-primary">${formatRupiah(order.totalPrice)}</div>
-
-                    ${order.status === 'pending' ? `
-                    <div class="mb-4 p-3 rounded-lg border border-blue-100 bg-blue-50" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;">
-                        <label class="block text-xs font-semibold text-blue-700 mb-1" style="color: #1d4ed8;">
-                            📦 Barang akan mendarat di meja pelanggan pada:
-                        </label>
-                        ${(savedDate && order.deliveryTime) ? `
-                            <div class="font-bold text-blue-800 text-sm" style="color: #1e40af;">${formattedSavedDate} (${order.deliveryTime})</div>
-                        ` : `
-                            <div class="flex flex-row gap-2 mb-2" style="display: flex; gap: 8px;">
-                                <input type="date" 
-                                    class="delivery-date-input form-input border rounded-md px-3 py-2 text-sm" 
-                                    data-order-id="${order.id}"
-                                    value="${savedDate || ''}"
-                                    min="${new Date().toISOString().split('T')[0]}"
-                                    style="border: 1px solid #93c5fd; border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; flex: 1; background: white;">
-                                <select class="delivery-time-input form-input border rounded-md px-2 py-2 text-sm"
-                                        data-order-id="${order.id}"
-                                        style="border: 1px solid #93c5fd; border-radius: 6px; padding: 6px 5px; font-size: 13px; cursor: pointer; flex: 1; background: white;">
-                                    <option value="" disabled selected>Pilih Waktu</option>
-                                    <option value="Sebelum Maksi" ${order.deliveryTime === 'Sebelum Maksi' ? 'selected' : ''}>Sebelum Maksi</option>
-                                    <option value="Setelah Maksi" ${order.deliveryTime === 'Setelah Maksi' ? 'selected' : ''}>Setelah Maksi</option>
-                                </select>
+            <tr class="border-b hover:bg-gray-100 transition-colors cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                <td class="font-semibold text-sm text-center" style="padding: 6px;">${index + 1}</td>
+                <td class="text-left" style="padding: 6px;">
+                    <div class="font-semibold text-primary text-sm">#${order.id}</div>
+                    <div class="text-sm text-muted">${timeAgo(order.createdAt)}</div>
+                </td>
+                <td class="font-semibold text-sm text-left" style="padding: 6px;">${buyer.name}</td>
+                <td class="font-bold text-primary text-sm text-right" style="padding: 6px; padding-right: 12px;">${formatRupiah(order.totalPrice)}</td>
+                <td class="text-center" style="padding: 6px;">
+                    <span class="badge px-2 py-1 text-sm font-semibold capitalize text-secondary border border-gray-200 bg-gray-100" style="font-size: 14px; border-radius: var(--radius-full);">${displayStatus}</span>
+                </td>
+                <td class="text-center" style="padding: 6px;">
+                    <button class="btn btn-sm btn-outline text-sm">Detail <i data-lucide="chevron-down" class="w-4 h-4 inline"></i></button>
+                </td>
+            </tr>
+            <tr class="hidden bg-gray-50 border-b">
+                <td colspan="6" style="padding: 6px;">
+                    <div class="card p-4 border bg-white shadow-sm flex flex-col md:flex-row gap-4 text-sm" style="text-align: left;">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm mb-2 text-gray-700">Daftar Item:</h4>
+                            <ul class="list-disc pl-4 text-sm space-y-1 mb-2">
+                                ${order.items.map(i => `<li>${i.qty}x ${i.name} - ${formatRupiah(i.price)}</li>`).join('')}
+                            </ul>
+                            <div class="font-bold text-sm mt-2 text-primary border-t pt-2 border-gray-100">Total: ${formatRupiah(order.totalPrice)}</div>
+                        </div>
+                        <div class="flex-1" style="min-width: 250px;">
+                            <h4 class="font-bold text-sm mb-2 text-gray-700">Aksi & Pengiriman:</h4>
+                            ${order.status === 'pending' ? `
+                            <div class="mb-3 p-3 rounded-lg border border-blue-100 bg-blue-50 text-sm" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
+                                ${(savedDate && order.deliveryTime) ? `
+                                    <div class="font-bold text-blue-800 text-sm" style="color: #1e40af;">Mendarat: ${formattedSavedDate} (${order.deliveryTime})</div>
+                                ` : `
+                                    <div class="flex flex-col gap-2 mb-2">
+                                        <label class="text-sm font-semibold text-blue-700">Atur Waktu Pengiriman:</label>
+                                        <input type="date" 
+                                            class="delivery-date-input form-input border rounded-md px-2 py-1.5 text-sm" 
+                                            data-order-id="${order.id}"
+                                            value="${savedDate || ''}"
+                                            min="${new Date().toISOString().split('T')[0]}"
+                                            style="border: 1px solid #93c5fd; border-radius: 4px; padding: 6px; background: white; width: 100%;">
+                                        <select class="delivery-time-input form-input border rounded-md px-2 py-1.5 text-sm"
+                                                data-order-id="${order.id}"
+                                                style="border: 1px solid #93c5fd; border-radius: 4px; padding: 6px; background: white; width: 100%;">
+                                            <option value="" disabled selected>Pilih Waktu</option>
+                                            <option value="Sebelum Maksi" ${order.deliveryTime === 'Sebelum Maksi' ? 'selected' : ''}>Sebelum Maksi</option>
+                                            <option value="Setelah Maksi" ${order.deliveryTime === 'Setelah Maksi' ? 'selected' : ''}>Setelah Maksi</option>
+                                        </select>
+                                    </div>
+                                `}
                             </div>
-                            <p class="text-xs text-blue-600 mt-1" style="color: #2563eb;">⚠️ Pilih tanggal dan waktu untuk mengaktifkan tombol Proses Pesanan.</p>
-                        `}
-                    </div>
-                    ` : order.estimatedDelivery ? `
-                    <div class="mb-3 p-2 rounded-lg" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
-                        <span class="text-xs font-semibold" style="color: #15803d;">📦 Estimasi tiba: </span>
-                        <span class="text-xs font-bold" style="color: #166534;">${formattedSavedDate} (${order.deliveryTime || '-'})</span>
-                    </div>
-                    ` : ''}
+                            ` : order.estimatedDelivery ? `
+                            <div class="mb-3 p-3 rounded-lg text-sm" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                                <div class="font-semibold" style="color: #15803d;">Estimasi tiba: </div>
+                                <div class="font-bold" style="color: #166534;">${formattedSavedDate} (${order.deliveryTime || '-'})</div>
+                            </div>
+                            ` : ''}
 
-                    <div class="flex flex-wrap gap-2">
-                        ${order.status === 'pending' ? `<button class="btn btn-sm btn-primary btn-update-status" data-id="${order.id}" data-status="processing" ${processBtnDisabled} style="${processBtnDisabled ? 'opacity:0.4;cursor:not-allowed;' : ''}">Proses Pesanan</button>` : ''}
-                        ${order.status === 'processing' ? `<button class="btn btn-sm btn-primary btn-update-status" data-id="${order.id}" data-status="shipped">Kirim Pesanan</button>` : ''}
-                        ${order.status === 'shipped' ? `<button class="btn btn-sm btn-success btn-update-status" data-id="${order.id}" data-status="completed">Tandai Selesai</button>` : ''}
-                        ${(order.status === 'pending' || order.status === 'processing') ? `<button class="btn btn-sm btn-danger btn-update-status" data-id="${order.id}" data-status="cancelled">Batalkan</button>` : ''}
+                            <div class="flex flex-wrap gap-2">
+                                ${order.status === 'pending' ? `<button class="btn btn-sm btn-primary btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="processing" ${processBtnDisabled} style="${processBtnDisabled ? 'opacity:0.4;cursor:not-allowed;' : ''}">Proses</button>` : ''}
+                                ${order.status === 'processing' ? `<button class="btn btn-sm btn-primary btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="shipped">Kirim</button>` : ''}
+                                ${order.status === 'shipped' ? `<button class="btn btn-sm btn-success btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="completed">Selesai</button>` : ''}
+                                ${(order.status === 'pending' || order.status === 'processing') ? `<button class="btn btn-sm btn-danger btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="cancelled">Batal</button>` : ''}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </td>
+            </tr>
         `;
     };
 
@@ -279,7 +300,7 @@ export async function render(params) {
             <div class="card border-0 card overflow-hidden">
                 <div class="tabs flex border-b px-2 pt-2 gap-2 overflow-x-auto">
                     <button class="tab active px-4 py-3 font-semibold text-secondary rounded-t-lg border-b-2 border-primary" data-target="tab-products">Produk Saya</button>
-                    <button class="tab px-4 py-3 font-semibold text-secondary rounded-t-lg border-b-2 border-transparent" data-target="tab-orders">Pesanan Masuk <span class="bg-primary text-white text-xs px-2 py-0.5 ml-1" style="border-radius: var(--radius-full);">${pendingOrders.length}</span></button>
+                    <button class="tab px-4 py-3 font-semibold text-secondary rounded-t-lg border-b-2 border-transparent" data-target="tab-orders">Pesanan${pendingOrders.length > 0 ? ' <span class="text-red-500 font-bold ml-1 text-lg leading-none">*</span>' : ''}</button>
                     <button class="tab px-4 py-3 font-semibold text-secondary rounded-t-lg border-b-2 border-transparent" data-target="tab-settings">Pengaturan</button>
                 </div>
 
@@ -364,8 +385,24 @@ export async function render(params) {
                     <div id="tab-orders" class="tab-content hidden">
                         <h2 class="text-xl font-heading font-bold mb-5">Pesanan Masuk</h2>
                         ${orders.length > 0 ? 
-                            `<div class="grid md:grid-cols-2 gap-4">${(await Promise.all(orders.sort((a,b)=>b.createdAt-a.createdAt).map(renderSellerOrderCard))).join('')}</div>` : 
-                            '<p class="text-center text-muted py-8">Belum ada pesanan.</p>'
+                            `<div class="overflow-x-auto w-full border rounded-lg">
+                                <table class="w-full table-fixed text-left border-collapse text-sm font-sans">
+                                    <thead class="border-b">
+                                        <tr>
+                                            <th class="text-sm font-semibold text-gray-700 text-center" style="width: 5%; padding: 6px; background-color: #f8fafc;">No.</th>
+                                            <th class="text-sm font-semibold text-gray-700 text-left" style="width: 30%; padding: 6px; background-color: #eff6ff;">ID & Waktu</th>
+                                            <th class="text-sm font-semibold text-gray-700 text-left" style="width: 15%; padding: 6px; background-color: #f0fdf4;">Pembeli</th>
+                                            <th class="text-sm font-semibold text-gray-700 text-right" style="width: 20%; padding: 6px; padding-right: 12px; background-color: #fefce8;">Total Pesanan</th>
+                                            <th class="text-sm font-semibold text-gray-700 text-center" style="width: 15%; padding: 6px; background-color: #faf5ff;">Status</th>
+                                            <th class="text-sm font-semibold text-gray-700 text-center" style="width: 15%; padding: 6px; background-color: #fff1f2;">Tindakan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(await Promise.all(orders.sort((a,b)=>b.createdAt-a.createdAt).map((order, index) => renderSellerOrderRow(order, index)))).join('')}
+                                    </tbody>
+                                </table>
+                            </div>` : 
+                            '<p class="text-center text-muted py-8 bg-gray-50 border border-dashed rounded-lg">Belum ada pesanan.</p>'
                         }
                     </div>
 
@@ -840,7 +877,7 @@ export async function afterRender(params) {
                                 const waktu = (order.deliveryTime || 'segera').toLowerCase();
                                 text = `Halo Kak ${buyer.name}, pesanan Kakak saat ini sedang dikirim ke meja Kakak, Insya Allah ${waktu} sudah bisa Kakak terima.`;
                             } else if (status === 'completed') {
-                                text = `Halo Kak ${buyer.name}, pesanan Kakak di warung ${warungName} saat ini telah selesai ✅ \nTerima kasih sudah jajan di yuuk-jajan.cilebut-one.cloud`;
+                                text = `Halo Kak ${buyer.name}, pesanan Kakak di warung ${warungName} saat ini telah selesai ✅ \nTerima kasih sudah jajan di umkm-kemnaker.vercel.app`;
                             } else if (status === 'cancelled') {
                                 text = `Maaf Kak ${buyer.name}, pesanan Anda saat ini telah DIBATALKAN ❌.`;
                             }
