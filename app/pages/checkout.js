@@ -665,7 +665,7 @@ Silakan cek & proses pesanan di:
                     }
 
                     if (sellerPhone) {
-                        sendWANotification(
+                        await sendWANotification(
                             sellerPhone,
                             sellerName,
                             customOrderId,
