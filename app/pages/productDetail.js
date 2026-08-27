@@ -112,7 +112,7 @@ export async function render(params) {
             <div id="other-products-container" class="container pb-10" style="display: none;">
                 <div class="border-t border-gray-100 pt-8">
                     <h3 class="text-sm font-bold mb-4 text-gray-700">Produk Lain dari Warung Ini</h3>
-                    <div id="other-products-scroll" class="flex gap-3 pb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
+                    <div id="other-products-scroll" class="flex gap-2 pb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
                         <!-- Other products will be injected here -->
                     </div>
                 </div>
@@ -304,14 +304,14 @@ export async function afterRender(params) {
                 
                 // Render products
                 const html = otherProducts.map(p => `
-                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 110px; border: 1.5px solid #e5e7eb;">
-                        <div class="bg-gray-50 flex items-center justify-center overflow-hidden" style="height: 90px; padding: 6px;">
+                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 160px; border: 1.5px solid #e5e7eb;">
+                        <div class="bg-gray-50 flex items-center justify-center overflow-hidden" style="width: 100%; aspect-ratio: 1 / 1;">
                             ${p.image && p.image.startsWith('data:image') ? 
-                                `<img src="${p.image}" alt="${escapeHtml(p.name)}" class="w-full h-full object-contain mix-blend-multiply drop-shadow-sm">` : 
-                                `<span style="font-size: 2.5rem; opacity: 0.8;">${p.image || getCategoryEmoji(p.category)}</span>`
+                                `<img src="${p.image}" alt="${escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: contain;">` : 
+                                `<span style="font-size: 3rem; opacity: 0.8;">${p.image || getCategoryEmoji(p.category)}</span>`
                             }
                         </div>
-                        <div style="padding: 5px 6px; border-top: 1px solid #f3f4f6;">
+                        <div style="padding: 5px 7px; border-top: 1px solid #f3f4f6;">
                             <h4 class="font-semibold text-gray-800 truncate" style="font-size: 10px; margin-bottom: 2px;" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</h4>
                             <p class="text-primary font-bold" style="font-size: 10px;">${formatRupiah(p.price)}</p>
                         </div>
