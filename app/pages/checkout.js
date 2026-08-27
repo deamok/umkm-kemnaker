@@ -455,7 +455,7 @@ export async function afterRender(params) {
                     
                     <div class="flex justify-end gap-3" style="border-top: 1px solid #f3f4f6; padding-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
                         <button type="button" id="btn-cancel-proof" class="btn btn-secondary" style="padding: 6px 12px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Batal</button>
-                        <button type="button" id="btn-submit-proof" class="btn btn-primary" style="padding: 6px 12px; border: none; background: var(--accent-primary); color: white; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Kirim & Buat Pesanan</button>
+                        <button type="button" id="btn-submit-proof" class="btn btn-primary" style="padding: 6px 12px; border: none; background: var(--accent-primary); color: white; border-radius: 6px; cursor: not-allowed; opacity: 0.5; font-size: 14px; font-weight: 500;" disabled>Kirim & Buat Pesanan</button>
                     </div>
                 </div>
             </div>
@@ -477,8 +477,21 @@ export async function afterRender(params) {
                     base64Proof = event.target.result;
                     previewImage.src = base64Proof;
                     previewContainer.style.display = 'block';
+                    
+                    // Enable button
+                    btnSubmit.disabled = false;
+                    btnSubmit.style.opacity = '1';
+                    btnSubmit.style.cursor = 'pointer';
                 };
                 reader.readAsDataURL(file);
+            } else {
+                base64Proof = '';
+                previewContainer.style.display = 'none';
+                
+                // Disable button
+                btnSubmit.disabled = true;
+                btnSubmit.style.opacity = '0.5';
+                btnSubmit.style.cursor = 'not-allowed';
             }
         });
 
