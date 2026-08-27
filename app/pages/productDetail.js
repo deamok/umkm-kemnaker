@@ -112,7 +112,7 @@ export async function render(params) {
             <div id="other-products-container" class="container pb-10" style="display: none;">
                 <div class="border-t border-gray-100 pt-8">
                     <h3 class="text-sm font-bold mb-4 text-gray-700">Produk Lain dari Warung Ini</h3>
-                    <div id="other-products-scroll" class="flex gap-2 pb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
+                    <div id="other-products-scroll" class="flex gap-1 pb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
                         <!-- Other products will be injected here -->
                     </div>
                 </div>
@@ -304,7 +304,7 @@ export async function afterRender(params) {
                 
                 // Render products
                 const html = otherProducts.map(p => `
-                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 160px; border: 1.5px solid #e5e7eb;">
+                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 225px; border: 1.5px solid #e5e7eb;">
                         <div class="bg-gray-50 flex items-center justify-center overflow-hidden" style="width: 100%; aspect-ratio: 1 / 1;">
                             ${p.image && p.image.startsWith('data:image') ? 
                                 `<img src="${p.image}" alt="${escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: contain;">` : 
