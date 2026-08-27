@@ -82,19 +82,19 @@ export async function render(params) {
                             <i data-lucide="user" class="w-6 h-6 mr-3 text-primary"></i> Detail Profil
                         </h2>
                         
-                        <div style="display: flex; flex-direction: column; gap: 0.625rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0;">
                             <div>
-                                <span class="font-bold text-sm block" style="margin-bottom: 2px; color: var(--accent-primary);">Nama Lengkap</span>
+                                <span class="font-bold text-sm block" style="margin-bottom: 1px; color: var(--accent-primary);">Nama Lengkap</span>
                                 <div class="p-3 border rounded-md bg-gray-50 text-gray-800 font-medium">${user.name}</div>
                             </div>
                             
                             <div>
-                                <span class="font-bold text-sm block" style="margin-bottom: 2px; color: var(--accent-primary);">Email</span>
+                                <span class="font-bold text-sm block" style="margin-bottom: 1px; color: var(--accent-primary);">Email</span>
                                 <div class="p-3 border rounded-md bg-gray-50 text-gray-800 font-medium">${user.email}</div>
                             </div>
                             
                             <div>
-                                <span class="font-bold text-sm block" style="margin-bottom: 2px; color: var(--accent-primary);">No. Handphone</span>
+                                <span class="font-bold text-sm block" style="margin-bottom: 1px; color: var(--accent-primary);">No. Handphone</span>
                                 <div class="p-3 border rounded-md bg-gray-50 text-gray-800 font-medium">${user.phone || '<em class="text-muted text-xs">Belum diisi</em>'}</div>
                             </div>
                             
@@ -120,7 +120,7 @@ export async function render(params) {
                             <i data-lucide="user-cog" class="w-6 h-6 mr-3 text-primary"></i> Edit Profil
                         </h2>
                         
-                        <form id="profile-form-simplified" style="display: flex; flex-direction: column; gap: 0.625rem;">
+                        <form id="profile-form-simplified" style="display: flex; flex-direction: column; gap: 0;">
                             <div class="form-group">
                                 <label class="form-label font-bold text-sm block" style="margin-bottom: 2px; color: var(--accent-primary);">Nama Lengkap</label>
                                 <input type="text" id="profile-name" class="form-input p-3 border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-md bg-gray-50 hover:bg-white focus:bg-white" style="width: 100%;" value="${user.name}" required>
@@ -165,7 +165,7 @@ export async function render(params) {
                             <i data-lucide="user" class="w-6 h-6 mr-3 text-primary"></i> Detail Profil
                         </h2>
                         
-                        <div style="display: flex; flex-direction: column; gap: 0.625rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0;">
                             <div>
                                 <span class="font-bold text-sm block" style="margin-bottom: 2px; color: var(--accent-primary);">Nama Lengkap</span>
                                 <div class="p-3 border rounded-md bg-gray-50 text-gray-800 font-medium">${user.name}</div>
@@ -211,7 +211,7 @@ export async function render(params) {
                             <i data-lucide="user-cog" class="w-6 h-6 mr-3 text-primary"></i> Edit Profil
                         </h2>
                         
-                        <form id="profile-form-full" style="display: flex; flex-direction: column; gap: 0.625rem;">
+                        <form id="profile-form-full" style="display: flex; flex-direction: column; gap: 0;">
                             <div class="form-group">
                                 <label class="form-label font-bold text-sm block" style="margin-bottom: 2px; color: var(--accent-primary);">Nama Lengkap</label>
                                 <input type="text" id="profile-name" class="form-input p-3 border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-md bg-gray-50 hover:bg-white focus:bg-white" style="width: 100%;" value="${user.name}" required>

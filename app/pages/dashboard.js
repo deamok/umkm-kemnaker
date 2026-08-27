@@ -466,14 +466,11 @@ export async function render(params) {
                                     })()}
                                 </div>
                             </div>
-
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
                                 <div class="form-group" style="margin: 0;">
-                                    <label class="form-label font-bold text-sm block" style="margin-bottom: 2px; padding-top: 0.5rem; color: var(--accent-primary);">Gedung</label>
                                     <div class="p-1.5 border rounded-md bg-gray-50 text-gray-800 font-medium">${lapak.gedung || '<em class="text-muted text-xs">Belum diisi</em>'}</div>
                                 </div>
                                 <div class="form-group" style="margin: 0;">
-                                    <label class="form-label font-bold text-sm block" style="margin-bottom: 2px; padding-top: 0.5rem; color: var(--accent-primary);">Lantai</label>
                                     <div class="p-1.5 border rounded-md bg-gray-50 text-gray-800 font-medium">${lapak.lantai || '<em class="text-muted text-xs">Belum diisi</em>'}</div>
                                 </div>
                             </div>
