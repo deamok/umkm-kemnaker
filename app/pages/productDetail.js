@@ -304,7 +304,7 @@ export async function afterRender(params) {
                 
                 // Render products
                 const html = otherProducts.map(p => `
-                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 225px; border: 1.5px solid #e5e7eb;">
+                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 225px; min-width: 225px; border: 1.5px solid #e5e7eb;">
                         <div class="bg-gray-50 flex items-center justify-center overflow-hidden" style="width: 100%; aspect-ratio: 1 / 1;">
                             ${p.image && p.image.startsWith('data:image') ? 
                                 `<img src="${p.image}" alt="${escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: contain;">` : 
