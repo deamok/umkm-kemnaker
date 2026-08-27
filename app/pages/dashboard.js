@@ -211,19 +211,33 @@ export async function render(params) {
                 </td>
             </tr>
             <tr class="hidden bg-gray-50 border-b">
-                <td colspan="6" style="padding: 6px;">
-                    <div class="card p-4 border bg-white shadow-sm flex flex-col md:flex-row gap-4 text-sm" style="text-align: left;">
-                        <div class="flex-1">
+                <td colspan="6" style="padding: 0;">
+                    <div style="position: sticky; left: 0; width: calc(100vw - 56px); max-width: 100%; box-sizing: border-box; padding: 6px; padding-left: 0;">
+                        <div class="card p-3 md:p-4 border bg-white shadow-sm flex flex-col md:flex-row gap-4 text-sm" style="text-align: left; width: 100%; box-sizing: border-box; overflow: hidden;">
+                            <div class="flex-1">
                             <h4 class="font-bold text-sm mb-2 text-gray-700">Daftar Item:</h4>
                             <ul class="list-disc pl-4 text-sm space-y-1 mb-2">
                                 ${order.items.map(i => `<li>${i.qty}x ${i.name} - ${formatRupiah(i.price)}</li>`).join('')}
                             </ul>
-                            <div class="font-bold text-sm mt-2 text-primary border-t pt-2 border-gray-100">Total: ${formatRupiah(order.totalPrice)}</div>
+                            <div class="font-bold text-sm mt-2 text-primary border-t pt-2 border-gray-100 mb-3">Total: ${formatRupiah(order.totalPrice)}</div>
+                            
+                            <h4 class="font-bold text-sm mb-2 text-gray-700">Pembayaran:</h4>
+                            <div class="text-sm space-y-1">
+                                <div><span class="text-gray-500">Metode:</span> <span class="font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50">${(order.paymentMethod === 'transfer' ? 'Transfer Bank' : order.paymentMethod === 'qris' ? 'QRIS' : order.paymentMethod === 'cod' ? 'COD' : (order.paymentMethod || '-'))}</span></div>
+                                ${((order.paymentMethod === 'transfer' || order.paymentMethod === 'qris') && order.paymentProof) ? `
+                                    <div class="mt-2">
+                                        <div class="text-gray-500 mb-1">Bukti Bayar:</div>
+                                        <a href="${order.paymentProof}" target="_blank" class="inline-block" title="Klik untuk memperbesar">
+                                            <img src="${order.paymentProof}" class="border rounded-md shadow-sm cursor-pointer hover:opacity-90 transition-opacity" style="max-height: 120px; max-width: 100%; object-fit: contain; background: #f9fafb;">
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
                         <div class="flex-1" style="min-width: 250px;">
                             <h4 class="font-bold text-sm mb-2 text-gray-700">Aksi & Pengiriman:</h4>
                             ${order.status === 'pending' ? `
-                            <div class="mb-3 p-3 rounded-lg border border-blue-100 bg-blue-50 text-sm" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
+                            <div class="mb-3 p-1 rounded-lg border border-blue-100 bg-blue-50 text-sm" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
                                 ${(savedDate && order.deliveryTime) ? `
                                     <div class="font-bold text-blue-800 text-sm" style="color: #1e40af;">Mendarat: ${formattedSavedDate} (${order.deliveryTime})</div>
                                 ` : `
@@ -246,7 +260,7 @@ export async function render(params) {
                                 `}
                             </div>
                             ` : order.estimatedDelivery ? `
-                            <div class="mb-3 p-3 rounded-lg text-sm" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                            <div class="mb-3 p-1 rounded-lg text-sm" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
                                 <div class="font-semibold" style="color: #15803d;">Estimasi tiba: </div>
                                 <div class="font-bold" style="color: #166534;">${formattedSavedDate} (${order.deliveryTime || '-'})</div>
                             </div>
@@ -257,6 +271,7 @@ export async function render(params) {
                                 ${order.status === 'processing' ? `<button class="btn btn-sm btn-primary btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="shipped">Kirim</button>` : ''}
                                 ${order.status === 'shipped' ? `<button class="btn btn-sm btn-success btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="completed">Selesai</button>` : ''}
                                 ${(order.status === 'pending' || order.status === 'processing') ? `<button class="btn btn-sm btn-danger btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="cancelled">Batal</button>` : ''}
+                            </div>
                             </div>
                         </div>
                     </div>

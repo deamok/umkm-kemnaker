@@ -708,31 +708,37 @@ Pantau status pesanan Kakak di sini:
             };
 
             const executeCreateOrders = async (paymentProof = null) => {
-                // Generate custom order ID in format SO.YYYY-MM.NNNN
-                const orders = await Store.getAllOrders();
-                const now = new Date();
-                const yyyy = now.getFullYear();
-                const mm = String(now.getMonth() + 1).padStart(2, '0');
-                const prefix = `SO.${yyyy}-${mm}.`;
-                
-                // Find all existing orders starting with "SO." to keep a global running serial number
-                const allSoOrders = orders.filter(o => o.id && o.id.startsWith('SO.'));
-                let nextNum = 1;
-                if (allSoOrders.length > 0) {
-                    const nums = allSoOrders.map(o => {
-                        const parts = o.id.split('.');
-                        const numStr = parts[parts.length - 1];
-                        const parsed = parseInt(numStr, 10);
-                        return isNaN(parsed) ? 0 : parsed;
-                    });
-                    nextNum = Math.max(...nums) + 1;
-                }
+                showToast('Memproses pesanan, mohon tunggu...', 'info');
+                try {
+                    // Generate custom order ID in format SO.YYYY-MM.NNNN
+                    const now = new Date();
+                    const yyyy = now.getFullYear();
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const prefix = `SO.${yyyy}-${mm}.`;
+                    
+                    let nextNum = 1;
+                    try {
+                        const allOrders = await Store.getAllOrders();
+                        const allSoOrders = allOrders.filter(o => o.id && o.id.startsWith('SO.'));
+                        if (allSoOrders.length > 0) {
+                            const nums = allSoOrders.map(o => {
+                                const parts = o.id.split('.');
+                                const numStr = parts[parts.length - 1];
+                                const parsed = parseInt(numStr, 10);
+                                return isNaN(parsed) ? 0 : parsed;
+                            });
+                            nextNum = Math.max(...nums) + 1;
+                        }
+                    } catch(err) {
+                        console.warn("Gagal mengambil semua pesanan, fallback ke ID acak:", err);
+                        nextNum = Math.floor(Math.random() * 9000) + 1000;
+                    }
 
-                const paymentLabels = { transfer: 'Transfer Bank', qris: 'QRIS', cod: 'COD / Bayar di Tempat' };
-                const paymentMethodLabel = paymentLabels[selectedMethod] || selectedMethod;
+                    const paymentLabels = { transfer: 'Transfer Bank', qris: 'QRIS', cod: 'COD / Bayar di Tempat' };
+                    const paymentMethodLabel = paymentLabels[selectedMethod] || selectedMethod;
 
-                let serialOffset = 0;
-                for (const sellerId of Object.keys(sellerItems)) {
+                    let serialOffset = 0;
+                    for (const sellerId of Object.keys(sellerItems)) {
                     const currentSerial = nextNum + serialOffset;
                     const nextNumStr = String(currentSerial).padStart(4, '0');
                     const customOrderId = `${prefix}${nextNumStr}`;
@@ -801,11 +807,15 @@ Pantau status pesanan Kakak di sini:
                             paymentMethodLabel
                         );
                     }
-                }
+                    }
 
-                Store.clearCart();
-                showToast('Pesanan berhasil dibuat!', 'success');
-                Router.navigate('/orders');
+                    Store.clearCart();
+                    showToast('Pesanan berhasil dibuat!', 'success');
+                    Router.navigate('/orders');
+                } catch(e) {
+                    console.error("Kesalahan saat checkout:", e);
+                    showToast('Gagal memproses pesanan: ' + e.message, 'error');
+                }
             };
 
             if (selectedMethod === 'transfer' || selectedMethod === 'qris') {
