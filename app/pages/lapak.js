@@ -55,8 +55,8 @@ export async function render(params) {
                                     </div>
                                     ${(lapak.gedung || lapak.lantai) ? `
                                         <div class="text-[11px] font-semibold mt-0.5 text-secondary">
-                                            ${lapak.gedung ? `<span>Gedung: ${escapeHtml(lapak.gedung)}</span>` : ''} 
-                                            ${lapak.lantai ? `<span style="margin-left: 6px;">Lantai: ${escapeHtml(lapak.lantai)}</span>` : ''}
+                                            ${lapak.gedung ? `<span>${escapeHtml(lapak.gedung)}</span>` : ''} 
+                                            ${lapak.lantai ? `<span style="margin-left: 6px;">${escapeHtml(lapak.lantai)}</span>` : ''}
                                         </div>
                                     ` : ''}
                                 </div>
