@@ -28,92 +28,94 @@ export async function render(params) {
     if (product.category === 'kerajinan') bgGradient = 'linear-gradient(135deg, #6c5ce7, #a29bfe)';
 
     return `
-        <div class="product-detail container py-10 fade-in">
-            <div class="grid grid-2" style="gap: 3rem; align-items: start;">
-                <!-- Image Side -->
-                <div class="product-detail-image-container bg-white border border-gray-200 p-8 flex items-center justify-center rounded-xl" style="position: relative; overflow: hidden;">
-                    ${product.status === 'po' ? `
-                        <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10;">
-                            <div class="bg-orange-500 text-white font-bold text-center py-2 shadow-md" style="position: absolute; top: 32px; right: -35px; width: 170px; transform: rotate(45deg);">PRE-ORDER</div>
-                        </div>
-                    ` : `
-                        <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10;">
-                            <div class="bg-green-500 text-white font-bold text-center py-2 shadow-md" style="position: absolute; top: 32px; right: -35px; width: 170px; transform: rotate(45deg);">READY</div>
-                        </div>
-                    `}
-                    ${product.image && product.image.startsWith('data:image') ? 
-                        `<img src="${product.image}" alt="${escapeHtml(product.name)}" class="object-contain" style="max-width: 100%; max-height: 100%; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));">` :
-                        `<div class="product-image-placeholder flex flex-center justify-center w-full h-full rounded-lg" style="background: ${bgGradient}" >
-                            <span class="product-emoji text-9xl">${product.image || getCategoryEmoji(product.category)}</span>
-                        </div>`
-                    }
-                </div>
-
-                <!-- Info Side -->
-                <div class="product-detail-info flex flex-col justify-start">
-                    <h1 class="product-detail-name text-4xl font-semibold text-gray-800 mb-2">${escapeHtml(product.name)}</h1>
-                    
-                    <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                        <span>(${product.sold || 0} terjual)</span>
-                    </div>
-
-                    <div class="product-detail-desc prose text-gray-600 mb-6 text-md leading-relaxed">
-                        <p class="whitespace-pre-line">${escapeHtml(product.description)}</p>
-                    </div>
-
-                    <div class="product-detail-price text-3xl font-semibold text-gray-800 mb-6">
-                        ${formatRupiah(product.price)} <span class="text-xl font-normal text-gray-500">/ ${escapeHtml(product.unit || 'pcs')}</span>
-                    </div>
-
-                    <div class="border-t border-gray-200 w-full mb-6"></div>
-
-
-
-                    <div class="flex items-center gap-3 mb-8">
-                        <div class="flex items-center justify-center border border-gray-300 rounded-md overflow-hidden h-10 bg-white" style="width: fit-content;">
-                            <button id="btn-qty-minus" class="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors border-r border-gray-200 select-none">
-                                <i data-lucide="minus" class="w-4 h-4"></i>
-                            </button>
-                            <div class="flex items-center justify-center relative cursor-ns-resize select-none h-full bg-gray-50" id="qty-scroll-area" title="Gulir atau geser atas/bawah untuk mengubah" style="width: 3.5rem;">
-                                <input type="number" id="input-qty" value="${product.minOrder || 1}" min="${product.minOrder || 1}" ${product.status === 'po' ? '' : `max="${product.stock}"`} class="w-full h-full text-center outline-none font-bold text-gray-800 text-[12pt] bg-transparent pointer-events-none" style="appearance: none; -moz-appearance: textfield; margin: 0;" readonly>
+        <div style="overflow-x: hidden; width: 100%;">
+            <div class="product-detail container py-10 fade-in">
+                <div class="grid grid-2" style="gap: 3rem; align-items: start;">
+                    <!-- Image Side -->
+                    <div class="product-detail-image-container bg-white border border-gray-200 p-8 flex items-center justify-center rounded-xl" style="position: relative; overflow: hidden;">
+                        ${product.status === 'po' ? `
+                            <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10;">
+                                <div class="bg-orange-500 text-white font-bold text-center py-2 shadow-md" style="position: absolute; top: 32px; right: -35px; width: 170px; transform: rotate(45deg);">PRE-ORDER</div>
                             </div>
-                            <button id="btn-qty-plus" class="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200 select-none">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                        
-                        <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-add-cart" title="Tambahkan ke Keranjang">
-                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                        </button>
-
-                        <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-buy-now" title="Beli Langsung">
-                            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                        </button>
-
-                        <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-chat-seller" data-sellerid="${product.sellerId}" data-sellername="${escapeHtml(sellerName)}" title="Tanya Penjual">
-                            <i data-lucide="headset" class="w-5 h-5"></i>
-                        </button>
-                        
-                        <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Favorit">
-                            <i data-lucide="heart" class="w-5 h-5"></i>
-                        </button>
+                        ` : `
+                            <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10;">
+                                <div class="bg-green-500 text-white font-bold text-center py-2 shadow-md" style="position: absolute; top: 32px; right: -35px; width: 170px; transform: rotate(45deg);">READY</div>
+                            </div>
+                        `}
+                        ${product.image && product.image.startsWith('data:image') ? 
+                            `<img src="${product.image}" alt="${escapeHtml(product.name)}" class="object-contain" style="max-width: 100%; max-height: 100%; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));">` :
+                            `<div class="product-image-placeholder flex flex-center justify-center w-full h-full rounded-lg" style="background: ${bgGradient}" >
+                                <span class="product-emoji text-9xl">${product.image || getCategoryEmoji(product.category)}</span>
+                            </div>`
+                        }
                     </div>
 
-                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100 seller-link cursor-pointer mt-auto" data-sellerid="${product.sellerId}">
-                        <div class="flex-grow">
-                            <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Penjual UMKM</p>
-                            <p class="font-bold text-gray-800">${escapeHtml(sellerName)}</p>
+                    <!-- Info Side -->
+                    <div class="product-detail-info flex flex-col justify-start">
+                        <h1 class="product-detail-name text-4xl font-semibold text-gray-800 mb-2">${escapeHtml(product.name)}</h1>
+                        
+                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                            <span>(${product.sold || 0} terjual)</span>
                         </div>
-                        <i data-lucide="chevron-right" class="text-gray-400"></i>
+
+                        <div class="product-detail-desc prose text-gray-600 mb-6 text-md leading-relaxed">
+                            <p class="whitespace-pre-line">${escapeHtml(product.description)}</p>
+                        </div>
+
+                        <div class="product-detail-price text-3xl font-semibold text-gray-800 mb-6">
+                            ${formatRupiah(product.price)} <span class="text-xl font-normal text-gray-500">/ ${escapeHtml(product.unit || 'pcs')}</span>
+                        </div>
+
+                        <div class="border-t border-gray-200 w-full mb-6"></div>
+
+                        <div class="flex items-center gap-3 mb-8">
+                            <div class="flex items-center justify-center border border-gray-300 rounded-md overflow-hidden h-10 bg-white" style="width: fit-content;">
+                                <button id="btn-qty-minus" class="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors border-r border-gray-200 select-none">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <div class="flex items-center justify-center relative cursor-ns-resize select-none h-full bg-gray-50" id="qty-scroll-area" title="Gulir atau geser atas/bawah untuk mengubah" style="width: 3.5rem;">
+                                    <input type="number" id="input-qty" value="${product.minOrder || 1}" min="${product.minOrder || 1}" ${product.status === 'po' ? '' : `max="${product.stock}"`} class="w-full h-full text-center outline-none font-bold text-gray-800 text-[12pt] bg-transparent pointer-events-none" style="appearance: none; -moz-appearance: textfield; margin: 0;" readonly>
+                                </div>
+                                <button id="btn-qty-plus" class="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200 select-none">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            
+                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-add-cart" title="Tambahkan ke Keranjang">
+                                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                            </button>
+
+                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-buy-now" title="Beli Langsung">
+                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                            </button>
+
+                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-chat-seller" data-sellerid="${product.sellerId}" data-sellername="${escapeHtml(sellerName)}" title="Tanya Penjual">
+                                <i data-lucide="headset" class="w-5 h-5"></i>
+                            </button>
+                            
+                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Favorit">
+                                <i data-lucide="heart" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100 seller-link cursor-pointer mt-auto" data-sellerid="${product.sellerId}">
+                            <div class="flex-grow">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Penjual UMKM</p>
+                                <p class="font-bold text-gray-800">${escapeHtml(sellerName)}</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="text-gray-400"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div id="other-products-container" class="mt-8 mb-8" style="display: none;">
-            <h3 class="text-sm md:text-base font-bold mb-3 px-2 text-gray-700">Produk Lain dari Warung Ini</h3>
-            <div id="other-products-scroll" class="flex gap-4 overflow-x-auto pb-4 px-2" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
-                <!-- Other products will be injected here -->
+
+            <div id="other-products-container" class="container pb-10" style="display: none;">
+                <div class="border-t border-gray-100 pt-8">
+                    <h3 class="text-sm font-bold mb-4 text-gray-700">Produk Lain dari Warung Ini</h3>
+                    <div id="other-products-scroll" class="flex gap-3 pb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
+                        <!-- Other products will be injected here -->
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -302,16 +304,16 @@ export async function afterRender(params) {
                 
                 // Render products
                 const html = otherProducts.map(p => `
-                    <div class="flex-none w-[130px] md:w-[150px] bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start;">
-                        <div class="h-[110px] bg-gray-50 flex items-center justify-center p-2">
-                            ${p.imageUrl ? 
-                                `<img src="${p.imageUrl}" alt="${escapeHtml(p.name)}" class="w-full h-full object-contain mix-blend-multiply drop-shadow-sm">` : 
-                                `<i data-lucide="image" class="w-8 h-8 text-gray-300"></i>`
+                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 110px; border: 1.5px solid #e5e7eb;">
+                        <div class="bg-gray-50 flex items-center justify-center overflow-hidden" style="height: 90px; padding: 6px;">
+                            ${p.image && p.image.startsWith('data:image') ? 
+                                `<img src="${p.image}" alt="${escapeHtml(p.name)}" class="w-full h-full object-contain mix-blend-multiply drop-shadow-sm">` : 
+                                `<span style="font-size: 2.5rem; opacity: 0.8;">${p.image || getCategoryEmoji(p.category)}</span>`
                             }
                         </div>
-                        <div class="p-2 md:p-3 border-t border-gray-50">
-                            <h4 class="font-semibold text-gray-800 text-[11px] md:text-xs truncate mb-1" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</h4>
-                            <p class="text-primary font-bold text-xs">${formatRupiah(p.price)}</p>
+                        <div style="padding: 5px 6px; border-top: 1px solid #f3f4f6;">
+                            <h4 class="font-semibold text-gray-800 truncate" style="font-size: 10px; margin-bottom: 2px;" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</h4>
+                            <p class="text-primary font-bold" style="font-size: 10px;">${formatRupiah(p.price)}</p>
                         </div>
                     </div>
                 `).join('');
