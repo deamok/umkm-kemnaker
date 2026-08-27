@@ -211,6 +211,24 @@ export async function afterRender(params) {
         });
     }
 
+    if (btnMinus) {
+        btnMinus.addEventListener('click', () => {
+            if (qty > minQty) {
+                qty--;
+                updateQtyDisplay();
+            }
+        });
+    }
+
+    if (btnPlus) {
+        btnPlus.addEventListener('click', () => {
+            if (isPreOrder || qty < product.stock) {
+                qty++;
+                updateQtyDisplay();
+            }
+        });
+    }
+
     const handleAddToCart = (redirect = false) => {
         if (!Auth.isLoggedIn()) {
             showToast('Silakan login terlebih dahulu.', 'error');
@@ -386,6 +404,24 @@ export async function afterRender(params) {
                 touchStartY = touchCurrentY;
             }
         }, { passive: false });
+    }
+
+    if (btnMinus) {
+        btnMinus.addEventListener('click', () => {
+            if (qty > minQty) {
+                qty--;
+                updateQtyDisplay();
+            }
+        });
+    }
+
+    if (btnPlus) {
+        btnPlus.addEventListener('click', () => {
+            if (isPreOrder || qty < product.stock) {
+                qty++;
+                updateQtyDisplay();
+            }
+        });
     }
 
     if (btnMinus) {
