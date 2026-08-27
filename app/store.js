@@ -90,6 +90,11 @@ const Store = {
   },
 
   // Orders
+  async getAllOrders() {
+    const q = query(collection(db, this.KEYS.ORDERS));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
   async getOrders(userId) {
     const q = query(collection(db, this.KEYS.ORDERS), where("buyerId", "==", userId));
     const snapshot = await getDocs(q);
