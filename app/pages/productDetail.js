@@ -69,15 +69,15 @@ export async function render(params) {
                         <div class="border-t border-gray-200 w-full mb-6"></div>
 
                         <div class="flex items-center gap-3 mb-8">
-                            <div class="flex items-center justify-center border border-gray-300 rounded-md overflow-hidden h-10 bg-white" style="width: fit-content;">
-                                <button id="btn-qty-minus" class="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors border-r border-gray-200 select-none">
-                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                            <div style="display: flex; align-items: stretch; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; height: 40px; width: fit-content; background: white;">
+                                <button id="btn-qty-minus" style="width: 32px; height: 40px; display: flex; align-items: center; justify-content: center; color: #6b7280; border-right: 1px solid #e5e7eb; background: white; cursor: pointer; flex-shrink: 0;">
+                                    <i data-lucide="minus" style="width: 16px; height: 16px;"></i>
                                 </button>
-                                <div class="flex items-center justify-center relative cursor-ns-resize select-none h-full bg-gray-50" id="qty-scroll-area" title="Gulir atau geser atas/bawah untuk mengubah" style="width: 3.5rem;">
-                                    <input type="number" id="input-qty" value="${product.minOrder || 1}" min="${product.minOrder || 1}" ${product.status === 'po' ? '' : `max="${product.stock}"`} class="w-full h-full text-center outline-none font-bold text-gray-800 text-[12pt] bg-transparent pointer-events-none" style="appearance: none; -moz-appearance: textfield; margin: 0;" readonly>
+                                <div id="qty-scroll-area" title="Gulir atau geser atas/bawah untuk mengubah" style="width: 56px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f9fafb; cursor: ns-resize; user-select: none;">
+                                    <input type="number" id="input-qty" value="${product.minOrder || 1}" min="${product.minOrder || 1}" ${product.status === 'po' ? '' : `max="${product.stock}"`} style="width: 100%; height: 100%; text-align: center; border: none; outline: none; font-weight: bold; font-size: 14px; color: #1f2937; background: transparent; appearance: none; -moz-appearance: textfield; pointer-events: none;" readonly>
                                 </div>
-                                <button id="btn-qty-plus" class="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200 select-none">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                <button id="btn-qty-plus" style="width: 32px; height: 40px; display: flex; align-items: center; justify-content: center; color: #6b7280; border-left: 1px solid #e5e7eb; background: white; cursor: pointer; flex-shrink: 0;">
+                                    <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
                                 </button>
                             </div>
                             
