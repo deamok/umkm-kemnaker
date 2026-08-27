@@ -151,31 +151,28 @@ export async function render(params) {
     
     const totalIncome = completedOrders.reduce((sum, order) => sum + order.totalPrice, 0);
 
-    const renderProductRow = (p) => `
-        <div class="product-list-item card border flex flex-col hover:shadow-md transition-shadow overflow-hidden bg-white h-full" style="display: flex; flex-direction: column;">
-            <div class="flex flex-center justify-center text-4xl flex-shrink-0 bg-gray-50 border-b border-gray-100 relative" style="height: 140px; overflow: hidden; width: 100%; display: flex; justify-content: center; align-items: center;">
-                ${p.image && p.image.startsWith('data:image') ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">` : (p.image || '📦')}
-            </div>
-            <div class="p-3 text-center flex-grow flex flex-col justify-between" style="display: flex; flex-direction: column;">
-                <div>
-                    <div class="mb-1">
-                        <span class="badge ${p.status === 'po' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200'} text-[10px] px-2 py-0.5 border font-semibold" style="border-radius: var(--radius-full);">${p.status === 'po' ? 'Pre-Order' : 'Ready Stock'}</span>
-                    </div>
-                    <div class="font-bold text-gray-800 mb-0.5" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2;">${p.name}</div>
-                    <div class="font-bold text-md mb-1.5" style="color: #1e3a8a;">${formatRupiah(p.price)}</div>
-                    <div class="text-[11px] text-muted mb-2 bg-gray-50 py-1 rounded-md border border-gray-100 flex flex-col">
-                        <div style="margin-bottom: 2px;">Stok: <span class="font-bold ${p.stock > 0 ? 'text-green-600' : 'text-red-600'}">${p.stock}</span></div>
-                        <div class="flex justify-center items-center text-gray-500">
-                            <span>Terjual: ${p.sold || 0}</span>
-                        </div>
-                    </div>
+    const renderProductRow = (p, index) => `
+        <tr class="border-b hover:bg-gray-100 transition-colors">
+            <td class="font-semibold text-sm text-center" style="padding: 6px;">${index + 1}</td>
+            <td class="text-center" style="padding: 6px;">
+                <div style="width: 50px; height: 50px; overflow: hidden; margin: 0 auto; border-radius: 4px; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; background: #f9fafb;">
+                    ${p.image && p.image.startsWith('data:image') ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">` : (p.image || '📦')}
                 </div>
-                <div class="flex gap-2 justify-center border-t border-gray-100 pt-2" style="width: 100%;">
-                    <button class="btn btn-sm btn-outline btn-edit-product flex-1 border-blue-200 text-accent hover:bg-blue-50 transition-colors" data-id="${p.id}" style="padding: 0.25rem;"><i data-lucide="edit-2" class="w-3.5 h-3.5 mx-auto"></i></button>
-                    <button class="btn btn-sm btn-outline btn-delete-product flex-1 border-red-200 text-danger hover:bg-red-50 transition-colors" data-id="${p.id}" style="padding: 0.25rem;"><i data-lucide="trash-2" class="w-3.5 h-3.5 mx-auto"></i></button>
+            </td>
+            <td class="text-left" style="padding: 6px;">
+                <div class="font-bold text-gray-800 text-sm mb-1">${p.name}</div>
+                <span class="badge ${p.status === 'po' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200'} px-2 py-0.5 border font-semibold" style="font-size: 11px; border-radius: var(--radius-full);">${p.status === 'po' ? 'Pre-Order' : 'Ready Stock'}</span>
+            </td>
+            <td class="font-bold text-sm text-right" style="padding: 6px; padding-right: 12px; color: #1e3a8a;">${formatRupiah(p.price)}</td>
+            <td class="font-bold text-sm text-center ${p.stock > 0 ? 'text-green-600' : 'text-red-600'}" style="padding: 6px;">${p.stock}</td>
+            <td class="font-bold text-sm text-center text-gray-600" style="padding: 6px;">${p.sold || 0}</td>
+            <td class="text-center" style="padding: 6px;">
+                <div class="flex gap-2 justify-center">
+                    <button class="btn btn-sm btn-outline btn-edit-product border-blue-200 text-accent hover:bg-blue-50 transition-colors" data-id="${p.id}" style="padding: 0.35rem;"><i data-lucide="edit-2" class="w-4 h-4 mx-auto"></i></button>
+                    <button class="btn btn-sm btn-outline btn-delete-product border-red-200 text-danger hover:bg-red-50 transition-colors" data-id="${p.id}" style="padding: 0.35rem;"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button>
                 </div>
-            </div>
-        </div>
+            </td>
+        </tr>
     `;
 
     const renderSellerOrderRow = async (order, index) => {
@@ -376,8 +373,27 @@ export async function render(params) {
                             </form>
                         </div>
 
-                        <div class="products-list dashboard-products-list">
-                            ${products.length > 0 ? products.map(renderProductRow).join('') : '<div style="grid-column: 1 / -1;"><p class="text-center text-muted py-10 bg-gray-50 border border-dashed rounded-lg">Belum ada produk. Silakan tambah produk baru.</p></div>'}
+                        <div class="products-list-container">
+                            ${products.length > 0 ? `
+                                <div class="border rounded-lg" style="overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch;">
+                                    <table class="w-full table-fixed text-left border-collapse text-sm font-sans" style="min-width: 700px;">
+                                        <thead class="border-b">
+                                            <tr>
+                                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 5%; padding: 6px; background-color: #f8fafc;">No.</th>
+                                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 15%; padding: 6px; background-color: #eff6ff;">Gambar</th>
+                                                <th class="text-sm font-semibold text-gray-700 text-left" style="width: 30%; padding: 6px; background-color: #f0fdf4;">Nama Produk</th>
+                                                <th class="text-sm font-semibold text-gray-700 text-right" style="width: 15%; padding: 6px; background-color: #fefce8;">Harga</th>
+                                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 10%; padding: 6px; background-color: #faf5ff;">Stok</th>
+                                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 10%; padding: 6px; background-color: #eff6ff;">Terjual</th>
+                                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 15%; padding: 6px; background-color: #fff1f2;">Tindakan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${products.map((p, index) => renderProductRow(p, index)).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<div style="grid-column: 1 / -1;"><p class="text-center text-muted py-10 bg-gray-50 border border-dashed rounded-lg">Belum ada produk. Silakan tambah produk baru.</p></div>'}
                         </div>
                     </div>
 
@@ -385,8 +401,8 @@ export async function render(params) {
                     <div id="tab-orders" class="tab-content hidden">
                         <h2 class="text-xl font-heading font-bold mb-5">Pesanan Masuk</h2>
                         ${orders.length > 0 ? 
-                            `<div class="overflow-x-auto w-full border rounded-lg">
-                                <table class="w-full table-fixed text-left border-collapse text-sm font-sans">
+                            `<div class="border rounded-lg" style="overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch;">
+                                <table class="w-full table-fixed text-left border-collapse text-sm font-sans" style="min-width: 700px;">
                                     <thead class="border-b">
                                         <tr>
                                             <th class="text-sm font-semibold text-gray-700 text-center" style="width: 5%; padding: 6px; background-color: #f8fafc;">No.</th>
