@@ -69,32 +69,32 @@ export async function render(params) {
                         <div class="border-t border-gray-200 w-full mb-6"></div>
 
                         <div class="flex items-center gap-3 mb-8">
-                            <div style="display: flex; align-items: stretch; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; height: 40px; width: fit-content; background: white;">
-                                <button id="btn-qty-minus" style="width: 32px; height: 40px; display: flex; align-items: center; justify-content: center; color: #6b7280; border-right: 1px solid #e5e7eb; background: white; cursor: pointer; flex-shrink: 0;">
+                            <div style="display: inline-flex; align-items: stretch; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; height: 40px; background: white;">
+                                <button id="btn-qty-minus" style="width: 32px; height: 40px; display: flex; align-items: center; justify-content: center; color: #6b7280; border: none; border-right: 1px solid #d1d5db; background: white; cursor: pointer; flex-shrink: 0;">
                                     <i data-lucide="minus" style="width: 16px; height: 16px;"></i>
                                 </button>
                                 <div id="qty-scroll-area" title="Gulir atau geser atas/bawah untuk mengubah" style="width: 56px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f9fafb; cursor: ns-resize; user-select: none;">
-                                    <input type="number" id="input-qty" value="${product.minOrder || 1}" min="${product.minOrder || 1}" ${product.status === 'po' ? '' : `max="${product.stock}"`} style="width: 100%; height: 100%; text-align: center; border: none; outline: none; font-weight: bold; font-size: 14px; color: #1f2937; background: transparent; appearance: none; -moz-appearance: textfield; pointer-events: none;" readonly>
+                                    <input type="number" id="input-qty" value="${product.minOrder || 1}" min="${product.minOrder || 1}" ${product.status === 'po' ? '' : `max="${product.stock}"`} style="width: 100%; height: 100%; text-align: center; border: none; outline: none; font-weight: bold; font-size: 14px; color: #1f2937; background: transparent; appearance: none; -moz-appearance: textfield; pointer-events: none; padding: 0; display: flex; align-items: center;" readonly>
                                 </div>
-                                <button id="btn-qty-plus" style="width: 32px; height: 40px; display: flex; align-items: center; justify-content: center; color: #6b7280; border-left: 1px solid #e5e7eb; background: white; cursor: pointer; flex-shrink: 0;">
+                                <button id="btn-qty-plus" style="width: 32px; height: 40px; display: flex; align-items: center; justify-content: center; color: #6b7280; border: none; border-left: 1px solid #d1d5db; background: white; cursor: pointer; flex-shrink: 0;">
                                     <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
                                 </button>
                             </div>
                             
-                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-add-cart" title="Tambahkan ke Keranjang">
-                                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                            <button id="btn-add-cart" title="Tambahkan ke Keranjang" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #2563eb; border-radius: 6px; background: transparent; cursor: pointer; flex-shrink: 0;">
+                                <i data-lucide="shopping-cart" style="width: 20px; height: 20px;"></i>
                             </button>
 
-                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-buy-now" title="Beli Langsung">
-                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                            <button id="btn-buy-now" title="Beli Langsung" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #2563eb; border-radius: 6px; background: transparent; cursor: pointer; flex-shrink: 0;">
+                                <i data-lucide="shopping-bag" style="width: 20px; height: 20px;"></i>
                             </button>
 
-                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" id="btn-chat-seller" data-sellerid="${product.sellerId}" data-sellername="${escapeHtml(sellerName)}" title="Tanya Penjual">
-                                <i data-lucide="headset" class="w-5 h-5"></i>
+                            <button id="btn-chat-seller" data-sellerid="${product.sellerId}" data-sellername="${escapeHtml(sellerName)}" title="Tanya Penjual" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #2563eb; border-radius: 6px; background: transparent; cursor: pointer; flex-shrink: 0;">
+                                <i data-lucide="headset" style="width: 20px; height: 20px;"></i>
                             </button>
                             
-                            <button class="flex items-center justify-center w-10 h-10 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Favorit">
-                                <i data-lucide="heart" class="w-5 h-5"></i>
+                            <button title="Favorit" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #2563eb; border-radius: 6px; background: transparent; cursor: pointer; flex-shrink: 0;">
+                                <i data-lucide="heart" style="width: 20px; height: 20px;"></i>
                             </button>
                         </div>
 
@@ -110,9 +110,9 @@ export async function render(params) {
             </div>
 
             <div id="other-products-container" class="container pb-10" style="display: none;">
-                <div class="border-t border-gray-100 pt-8">
-                    <h3 class="text-sm font-bold mb-4 text-gray-700">Produk Lain dari Warung Ini</h3>
-                    <div id="other-products-scroll" class="flex gap-1 pb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
+                <div style="background: #eff6ff; border-radius: 12px; padding: 16px 16px 8px 16px; border: 1px solid #dbeafe;">
+                    <h3 class="text-sm font-bold mb-4" style="color: #1d4ed8;">Produk Lain dari Warung Ini</h3>
+                    <div id="other-products-scroll" class="flex pb-3" style="gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
                         <!-- Other products will be injected here -->
                     </div>
                 </div>
@@ -274,6 +274,13 @@ export async function afterRender(params) {
                 product.sellerId,
                 sellerDisplayName
             );
+            // Kirim pesan otomatis berisi referensi produk
+            await Store.sendMessage(
+                chatId,
+                currentUser.id,
+                `Halo, saya ingin bertanya tentang produk: ${product.name}`,
+                productId
+            );
             Router.navigate('/chat/' + chatId);
         } catch (err) {
             console.error(err);
@@ -304,14 +311,17 @@ export async function afterRender(params) {
                 
                 // Render products
                 const html = otherProducts.map(p => `
-                    <div class="flex-none bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 225px; min-width: 225px; border: 1.5px solid #e5e7eb;">
-                        <div class="bg-gray-50 flex items-center justify-center overflow-hidden" style="width: 100%; aspect-ratio: 1 / 1;">
+                    <div class="flex-none rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 150px; min-width: 150px; border: 1.5px solid #e5e7eb; position: relative; background: rgba(0,0,0,0.05);">
+                        <div style="position: absolute; top: 6px; left: 6px; z-index: 5; background: ${p.status === 'po' ? '#f97316' : '#22c55e'}; color: white; font-weight: 700; font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 4px; letter-spacing: 0.5px;">
+                            ${p.status === 'po' ? 'PO' : 'R'}
+                        </div>
+                        <div style="width: 100%; aspect-ratio: 1 / 1; background: #f9fafb; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                             ${p.image && p.image.startsWith('data:image') ? 
                                 `<img src="${p.image}" alt="${escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: contain;">` : 
                                 `<span style="font-size: 3rem; opacity: 0.8;">${p.image || getCategoryEmoji(p.category)}</span>`
                             }
                         </div>
-                        <div style="padding: 5px 7px; border-top: 1px solid #f3f4f6;">
+                        <div style="padding: 5px 7px; border-top: 1px solid #f3f4f6; text-align: center;">
                             <h4 class="font-semibold text-gray-800 truncate" style="font-size: 10px; margin-bottom: 2px;" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</h4>
                             <p class="text-primary font-bold" style="font-size: 10px;">${formatRupiah(p.price)}</p>
                         </div>

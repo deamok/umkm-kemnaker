@@ -91,6 +91,18 @@ export async function afterRender(params) {
             const isMe = msg.senderId === user.id;
             const msgTime = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
             
+            const productCard = msg.productId ? `
+                <div onclick="window.location.hash = '/product/${msg.productId}'" style="
+                    display: flex; align-items: center; gap: 8px;
+                    background: ${isMe ? 'rgba(255,255,255,0.15)' : 'var(--bg-tertiary)'};
+                    border-radius: 8px; padding: 8px; margin-bottom: 6px;
+                    cursor: pointer; border: 1px solid ${isMe ? 'rgba(255,255,255,0.2)' : 'var(--border-glass)'};
+                ">
+                    <i data-lucide="package" style="width:16px; height:16px; flex-shrink:0; opacity:0.8;"></i>
+                    <span style="font-size: 12px; font-weight: 600; opacity: 0.9; text-decoration: underline;">Lihat Produk →</span>
+                </div>
+            ` : '';
+
             return `
                 <div style="display: flex; justify-content: ${isMe ? 'flex-end' : 'flex-start'}; margin-bottom: 0.5rem; width: 100%;">
                     <div class="message-bubble" style="
@@ -105,6 +117,7 @@ export async function afterRender(params) {
                         border-bottom-right-radius: ${isMe ? '2px' : '12px'};
                         border-bottom-left-radius: ${isMe ? '12px' : '2px'};
                     ">
+                        ${productCard}
                         <p style="margin: 0; font-size: 14px; line-height: 1.4; word-break: break-word;">${escapeHtml(msg.text)}</p>
                         <div style="text-align: right; font-size: 9px; margin-top: 4px; opacity: 0.7; color: ${isMe ? 'white' : 'var(--text-secondary)'};">
                             ${msgTime}
