@@ -1,7 +1,7 @@
 import Store from '../store.js';
 import Auth from '../auth.js';
 import Router from '../router.js';
-import { showToast, timeAgo } from '../utils.js';
+import { showToast, timeAgo, formatIndonesianDate } from '../utils.js';
 
 export async function render(params) {
     if (!Auth.isLoggedIn()) {
@@ -148,7 +148,7 @@ export async function render(params) {
                     ${order.estimatedDelivery ? `
                     <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 font-semibold flex flex-col gap-1">
                         <span>📦 Barang akan mendarat di meja:</span>
-                        <span class="text-blue-900 font-bold">${new Date(order.estimatedDelivery).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} ${order.deliveryTime ? `(${order.deliveryTime})` : ''}</span>
+                        <span class="text-blue-900 font-bold">${formatIndonesianDate(order.estimatedDelivery, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} ${order.deliveryTime ? `(${order.deliveryTime})` : ''}</span>
                     </div>
                     ` : ''}
                 </div>

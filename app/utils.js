@@ -82,3 +82,65 @@ export function getCategoryEmoji(category) {
   };
   return emojis[category] || '📦';
 }
+
+export function parseFlexibleDate(dateStr) {
+  if (!dateStr) return null;
+  if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
+  if (typeof dateStr !== 'string') dateStr = String(dateStr);
+  dateStr = dateStr.trim();
+  if (!dateStr) return null;
+
+  // 1. Check standard YYYY-MM-DD or YYYY/MM/DD
+  const isoMatch = dateStr.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (isoMatch) {
+    const d = new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // 2. Check DD/MM/YYYY or MM/DD/YYYY or DD-MM-YYYY
+  const slashMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (slashMatch) {
+    const num1 = parseInt(slashMatch[1], 10);
+    const num2 = parseInt(slashMatch[2], 10);
+    const year = parseInt(slashMatch[3], 10);
+
+    // If num1 > 12, it MUST be day (DD/MM/YYYY)
+    if (num1 > 12) {
+      const d = new Date(year, num2 - 1, num1);
+      if (!isNaN(d.getTime())) return d;
+    }
+    // If num2 > 12, it MUST be day (MM/DD/YYYY)
+    else if (num2 > 12) {
+      const d = new Date(year, num1 - 1, num2);
+      if (!isNaN(d.getTime())) return d;
+    } else {
+      // Both <= 12. Default to DD/MM/YYYY (Indonesian standard)
+      const d = new Date(year, num2 - 1, num1);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // 3. Native fallback
+  const native = new Date(dateStr);
+  return isNaN(native.getTime()) ? null : native;
+}
+
+export function formatIndonesianDate(dateInput, options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) {
+  const d = parseFlexibleDate(dateInput);
+  if (!d) return dateInput || '-';
+  try {
+    return d.toLocaleDateString('id-ID', options);
+  } catch(e) {
+    return dateInput || '-';
+  }
+}
+
+export function toISODateString(dateInput) {
+  const d = parseFlexibleDate(dateInput);
+  if (!d) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+

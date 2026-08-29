@@ -1,7 +1,7 @@
 import Store from '../store.js';
 import Auth from '../auth.js';
 import Router from '../router.js';
-import { formatRupiah, showToast, timeAgo, generateId } from '../utils.js';
+import { formatRupiah, showToast, timeAgo, generateId, formatIndonesianDate, toISODateString, parseFlexibleDate } from '../utils.js';
 
 const eselonData = {
     "Setjen": [
@@ -180,7 +180,11 @@ export async function render(params) {
 
         // Format tanggal yang sudah tersimpan sebelumnya jika ada
         const savedDate = order.estimatedDelivery || '';
-        const formattedSavedDate = savedDate ? new Date(savedDate).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        const isoSavedDate = toISODateString(savedDate);
+        const formattedSavedDate = savedDate ? formatIndonesianDate(savedDate, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+        // Hitung batas minimum tanggal lokal (WIB)
+        const minDate = toISODateString(new Date());
 
         // Tombol aksi pesanan
         const processBtnDisabled = (order.status === 'pending' && (!savedDate || !order.deliveryTime)) ? 'disabled' : '';
@@ -246,8 +250,8 @@ export async function render(params) {
                                         <input type="date" 
                                             class="delivery-date-input form-input border rounded-md px-2 py-1.5 text-sm" 
                                             data-order-id="${order.id}"
-                                            value="${savedDate || ''}"
-                                            min="${new Date().toISOString().split('T')[0]}"
+                                            value="${isoSavedDate || ''}"
+                                            min="${minDate}"
                                             style="border: 1px solid #93c5fd; border-radius: 4px; padding: 6px; background: white; width: 100%;">
                                         <select class="delivery-time-input form-input border rounded-md px-2 py-1.5 text-sm"
                                                 data-order-id="${order.id}"
@@ -824,54 +828,59 @@ export async function afterRender(params) {
     });
 
     // Handler date & time picker - aktifkan tombol Proses Pesanan ketika KEDUANYA dipilih
-    const checkDeliveryInputs = async (orderId, card) => {
-        const dateInput = card.querySelector('.delivery-date-input');
-        const timeInput = card.querySelector('.delivery-time-input');
+    const checkDeliveryInputs = async (orderId, targetElement) => {
+        const parentRow = targetElement.closest('tr') || targetElement.closest('.card') || document;
+        const dateInput = parentRow.querySelector(`.delivery-date-input[data-order-id="${orderId}"]`);
+        const timeInput = parentRow.querySelector(`.delivery-time-input[data-order-id="${orderId}"]`);
         
-        const selectedDate = dateInput?.value;
+        const rawDate = dateInput?.value;
         const selectedTime = timeInput?.value;
+        const isoDate = toISODateString(rawDate) || rawDate;
         
-        if (selectedDate && selectedTime) {
+        if (isoDate && selectedTime) {
             // Simpan estimatedDelivery dan deliveryTime ke Firestore
-            await Store.updateOrderStatus(orderId, 'pending'); // keep status same
-            const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js");
-            const { db } = await import('../firebase-init.js');
-            const orderRef = doc(db, 'orders', orderId);
-            await updateDoc(orderRef, { estimatedDelivery: selectedDate, deliveryTime: selectedTime });
+            try {
+                const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js");
+                const { db } = await import('../firebase-init.js');
+                const orderRef = doc(db, 'orders', orderId);
+                await updateDoc(orderRef, { estimatedDelivery: isoDate, deliveryTime: selectedTime });
+            } catch (err) {
+                console.warn("Gagal update estimatedDelivery:", err);
+            }
 
-            // Aktifkan tombol Proses Pesanan pada kartu yang sama
-            const processBtn = card.querySelector('.btn-update-status[data-status="processing"]');
+            // Aktifkan tombol Proses Pesanan pada baris/kartu pesanan
+            const processBtn = parentRow.querySelector(`.btn-update-status[data-id="${orderId}"][data-status="processing"]`);
             if (processBtn) {
                 processBtn.removeAttribute('disabled');
                 processBtn.style.opacity = '1';
                 processBtn.style.cursor = 'pointer';
             }
             
-            // Tampilkan tanggal & waktu yang dipilih
-            const formattedDate = new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            // Tampilkan tanggal & waktu yang dipilih dalam Bahasa Indonesia
+            const formattedDate = formatIndonesianDate(isoDate, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             
             // Sembunyikan input dan tampilkan hasil
-            const container = dateInput.closest('.flex');
+            const container = dateInput?.closest('.flex') || dateInput?.parentElement;
             if (container) {
                 container.insertAdjacentHTML('afterend', `<div class="font-bold text-blue-800 text-sm mt-1" style="color: #1e40af;">${formattedDate} (${selectedTime})</div>`);
                 container.style.display = 'none';
             }
-            const hint = card.querySelector('.text-blue-600');
+            const hint = parentRow.querySelector('.text-blue-600');
             if (hint) hint.style.display = 'none';
+            
+            showToast('Waktu pengiriman berhasil diatur', 'success');
         }
     };
 
     document.querySelectorAll('.delivery-date-input').forEach(input => {
         input.addEventListener('change', (e) => {
-            const card = e.target.closest('.order-card');
-            if (card) checkDeliveryInputs(e.target.dataset.orderId, card);
+            checkDeliveryInputs(e.target.dataset.orderId, e.target);
         });
     });
     
     document.querySelectorAll('.delivery-time-input').forEach(input => {
         input.addEventListener('change', (e) => {
-            const card = e.target.closest('.order-card');
-            if (card) checkDeliveryInputs(e.target.dataset.orderId, card);
+            checkDeliveryInputs(e.target.dataset.orderId, e.target);
         });
     });
 
@@ -879,9 +888,41 @@ export async function afterRender(params) {
     document.querySelectorAll('.btn-update-status').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const button = e.target.closest('button');
-            if (button.disabled) return; // Abaikan jika tombol disabled
             const id = button.dataset.id;
             const status = button.dataset.status;
+
+            if (status === 'processing') {
+                const parentRow = button.closest('tr') || button.closest('.card') || document;
+                const dateInput = parentRow.querySelector(`.delivery-date-input[data-order-id="${id}"]`);
+                const timeInput = parentRow.querySelector(`.delivery-time-input[data-order-id="${id}"]`);
+                
+                const rawDate = dateInput?.value;
+                const selectedTime = timeInput?.value;
+                const isoDate = toISODateString(rawDate) || rawDate;
+
+                // Cek apakah di database atau di input sudah ada tanggal & waktu
+                const existingOrder = await Store.getOrder(id);
+                const finalDate = isoDate || existingOrder?.estimatedDelivery;
+                const finalTime = selectedTime || existingOrder?.deliveryTime;
+
+                if (!finalDate || !finalTime) {
+                    showToast('Harap tentukan tanggal dan waktu pengiriman terlebih dahulu', 'error');
+                    if (!finalDate && dateInput) dateInput.focus();
+                    else if (!finalTime && timeInput) timeInput.focus();
+                    return;
+                }
+
+                // Simpan tanggal & waktu terverifikasi ke Firestore
+                try {
+                    const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js");
+                    const { db } = await import('../firebase-init.js');
+                    const orderRef = doc(db, 'orders', id);
+                    await updateDoc(orderRef, { estimatedDelivery: toISODateString(finalDate) || finalDate, deliveryTime: finalTime });
+                } catch(err) {
+                    console.warn("Gagal simpan finalDate:", err);
+                }
+            }
+
             if(confirm(`Ubah status pesanan menjadi ${status}?`)) {
                 await Store.updateOrderStatus(id, status);
                 
@@ -899,7 +940,7 @@ export async function afterRender(params) {
                             
                             let text = '';
                             if (status === 'processing') {
-                                const estDate = order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'yang ditentukan';
+                                const estDate = order.estimatedDelivery ? formatIndonesianDate(order.estimatedDelivery, { day: 'numeric', month: 'long', year: 'numeric' }) : 'yang ditentukan';
                                 text = `Halo Kak ${buyer.name}, terima kasih untuk orderannya.\nPesanan makanan/ minuman Kakak di warung ${warungName} saat ini sedang kami proses dan dipersiapkan.\nSkedul mendarat di meja kakak tanggal ${estDate}`;
                             } else if (status === 'shipped') {
                                 const waktu = (order.deliveryTime || 'segera').toLowerCase();
