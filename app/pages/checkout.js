@@ -15,12 +15,12 @@ export async function render(params) {
         return `<div class="container text-center mt-5"><p>Keranjang kosong. Mengarahkan...</p></div>`;
     }
 
-    const user = await Auth.getCurrentUser();
+    const user = await Auth.getCurrentUser() || {};
     const firstCartItem = cart[0];
-    const firstProduct = await Store.getProduct(firstCartItem.productId);
-    const sellerId = firstProduct.sellerId;
-    const seller = await Store.getUser(sellerId) || { name: 'Penjual', phone: '-', address: '-' };
-    const sellerLapak = await Store.getLapak(sellerId) || {};
+    const firstProduct = firstCartItem ? await Store.getProduct(firstCartItem.productId) : null;
+    const sellerId = firstProduct?.sellerId || '';
+    const seller = sellerId ? (await Store.getUser(sellerId) || { name: 'Penjual', phone: '-', address: '-' }) : { name: 'Penjual', phone: '-', address: '-' };
+    const sellerLapak = sellerId ? (await Store.getLapak(sellerId) || {}) : {};
     const userUnit = user.eselon2 || user.eselon1 || '';
 
     // Determine which payment methods are enabled (fallback to showing all if none are set)
@@ -432,7 +432,7 @@ export async function afterRender(params) {
         });
     });
 
-    const showProofUploadModal = (onUploaded, onCancel) => {
+    const showProofUploadModal = (onUploaded, onCancel, onSwitchCod) => {
         let modalContainer = document.getElementById('proof-modal-container');
         if (!modalContainer) {
             modalContainer = document.createElement('div');
@@ -443,8 +443,8 @@ export async function afterRender(params) {
         modalContainer.innerHTML = `
             <div class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;">
                 <div class="modal-content scale-in text-left" style="background:white;border-radius:12px;width:90%;max-width:450px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;padding: 20px;">
-                    <h3 class="text-lg font-bold text-gray-900 mb-3" style="font-family: var(--font-heading);">Unggah Bukti Pembayaran</h3>
-                    <p class="text-sm text-gray-600 mb-4">Silakan unggah bukti transfer bank atau QRIS Anda sebelum melanjutkan pesanan.</p>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: var(--font-heading);">Unggah Bukti Pembayaran</h3>
+                    <p class="text-sm text-gray-600 mb-4">Silakan unggah foto struk / bukti transfer bank / QRIS Anda untuk melanjutkan.</p>
                     
                     <div style="margin-bottom: 15px;">
                         <input type="file" id="payment-proof-file" accept="image/*" class="form-input p-2 border rounded text-sm bg-white" style="width: 100%; cursor: pointer;" required>
@@ -453,9 +453,14 @@ export async function afterRender(params) {
                         </div>
                     </div>
                     
-                    <div class="flex justify-end gap-3" style="border-top: 1px solid #f3f4f6; padding-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
-                        <button type="button" id="btn-cancel-proof" class="btn btn-secondary" style="padding: 6px 12px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Batal</button>
-                        <button type="button" id="btn-submit-proof" class="btn btn-primary" style="padding: 6px 12px; border: none; background: var(--accent-primary); color: white; border-radius: 6px; cursor: not-allowed; opacity: 0.5; font-size: 14px; font-weight: 500;" disabled>Kirim & Buat Pesanan</button>
+                    <div class="flex items-center justify-between gap-2" style="border-top: 1px solid #f3f4f6; padding-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+                        <button type="button" id="btn-switch-cod" class="text-xs text-primary font-semibold hover:underline" style="background:none; border:none; padding:0; cursor:pointer;">
+                            Ganti ke COD (Bayar di Tempat)
+                        </button>
+                        <div class="flex gap-2" style="display: flex; gap: 8px;">
+                            <button type="button" id="btn-cancel-proof" class="btn btn-secondary" style="padding: 6px 12px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Batal</button>
+                            <button type="button" id="btn-submit-proof" class="btn btn-primary" style="padding: 6px 12px; border: none; background: var(--accent-primary); color: white; border-radius: 6px; cursor: not-allowed; opacity: 0.5; font-size: 14px; font-weight: 500;" disabled>Kirim & Pesan</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -468,6 +473,7 @@ export async function afterRender(params) {
         const previewImage = modalContainer.querySelector('#payment-proof-preview');
         const btnCancel = modalContainer.querySelector('#btn-cancel-proof');
         const btnSubmit = modalContainer.querySelector('#btn-submit-proof');
+        const btnSwitchCod = modalContainer.querySelector('#btn-switch-cod');
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -532,6 +538,11 @@ export async function afterRender(params) {
             if (onCancel) onCancel();
         });
 
+        btnSwitchCod?.addEventListener('click', () => {
+            close();
+            if (onSwitchCod) onSwitchCod();
+        });
+
         btnSubmit.addEventListener('click', () => {
             if (!base64Proof) {
                 showToast('Harap pilih file bukti pembayaran terlebih dahulu', 'error');
@@ -551,51 +562,66 @@ export async function afterRender(params) {
                 if (r.checked) deliveryType = r.value;
             }
             
-            const name = document.getElementById('checkout-name').value.trim();
-            const phone = document.getElementById('checkout-phone').value.trim();
-            const building = document.getElementById('checkout-building').value;
-            const floor = document.getElementById('checkout-floor').value;
-            const unit = document.getElementById('checkout-unit').value.trim();
+            const name = document.getElementById('checkout-name')?.value?.trim() || user.name || '';
+            const phone = document.getElementById('checkout-phone')?.value?.trim() || user.phone || '';
+            const building = document.getElementById('checkout-building')?.value || 'A';
+            const floor = document.getElementById('checkout-floor')?.value || '1';
+            const unit = document.getElementById('checkout-unit')?.value?.trim() || '';
 
             const viewContainer = document.getElementById('address-view-container');
-            const uAddress = viewContainer?.dataset.userAddress || '';
+            const editContainer = document.getElementById('address-edit-container');
+            const uAddress = viewContainer?.dataset.userAddress || user.address || '';
 
             // Validation for "antar" method (only if there is no profile address, or if they tried to customize/edit it)
             if (deliveryType === 'antar' && !uAddress && (!name || !phone || !unit)) {
-                showToast('Harap lengkapi nama, No HP, dan Unit Kerja penerima', 'error');
+                // Auto switch to edit view and focus on missing input so user sees what to fill!
+                editContainer?.classList.remove('hidden');
+                viewContainer?.classList.add('hidden');
+                const btnEditAddr = document.getElementById('btn-edit-address');
+                if (btnEditAddr) btnEditAddr.style.display = 'none';
+                
+                if (!unit) document.getElementById('checkout-unit')?.focus();
+                else if (!phone) document.getElementById('checkout-phone')?.focus();
+                else if (!name) document.getElementById('checkout-name')?.focus();
+
+                showToast('Harap lengkapi Nama, No HP, dan Unit Kerja / Ruangan penerima', 'error');
                 return;
             }
 
             let fullAddress = '';
             if (deliveryType === 'antar') {
-                if (name === viewContainer?.dataset.userName && 
-                    phone === viewContainer?.dataset.userPhone && 
-                    uAddress !== '') {
-                    fullAddress = `Antar ke Ruangan (Alamat Profil): ${uAddress}`;
-                } else {
+                if (uAddress && (!unit || (name === viewContainer?.dataset.userName && phone === viewContainer?.dataset.userPhone))) {
+                    fullAddress = `Antar ke Ruangan: ${uAddress}`;
+                } else if (unit) {
                     fullAddress = `${unit}, Gedung ${building}, Lantai ${floor}`;
+                } else {
+                    fullAddress = `Antar ke Ruangan: ${name} (${phone})`;
                 }
             } else {
-                fullAddress = `Ambil Sendiri (Ruangan Penjual: ${seller.name}, HP: ${seller.phone || '-'}, Alamat: ${seller.address || 'Gedung Kemenaker'})`;
+                fullAddress = `Ambil Sendiri (Ruangan Penjual: ${seller.name || 'Penjual'}, HP: ${seller.phone || '-'}, Alamat: ${seller.address || 'Gedung Kemenaker'})`;
             }
 
             const sellerItems = {};
 
-            // Group by seller
+            // Group by seller with robust fallbacks
             for (const cartItem of cart) {
                 const product = await Store.getProduct(cartItem.productId);
-                if (product) {
-                    if (!sellerItems[product.sellerId]) {
-                        sellerItems[product.sellerId] = [];
-                    }
-                    sellerItems[product.sellerId].push({
-                        productId: product.id,
-                        name: product.name,
-                        price: product.price,
-                        qty: cartItem.qty,
-                        image: product.image
-                    });
+                const sId = product?.sellerId || sellerId || 'default_seller';
+                if (!sellerItems[sId]) {
+                    sellerItems[sId] = [];
                 }
+                sellerItems[sId].push({
+                    productId: product?.id || cartItem.productId || '',
+                    name: product?.name || 'Produk',
+                    price: Number(product?.price) || 0,
+                    qty: Number(cartItem.qty) || 1,
+                    image: product?.image || ''
+                });
+            }
+
+            if (Object.keys(sellerItems).length === 0) {
+                showToast('Keranjang belanja kosong atau produk tidak valid.', 'error');
+                return;
             }
 
             // Kirim notifikasi WhatsApp ke penjual & pembeli via Evolution API
@@ -604,16 +630,16 @@ export async function afterRender(params) {
             const EVOLUTION_INSTANCE = 'umkm_vercel-app';
 
             const formatWAPhone = (rawPhone) => {
-                let phone = String(rawPhone || '').replace(/\D/g, '');
-                if (phone.startsWith('0')) phone = '62' + phone.slice(1);
-                if (!phone.startsWith('62')) phone = '62' + phone;
-                return phone;
+                let p = String(rawPhone || '').replace(/\D/g, '');
+                if (p.startsWith('0')) p = '62' + p.slice(1);
+                if (!p.startsWith('62')) p = '62' + p;
+                return p;
             };
 
             const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel, paymentProof = null) => {
                 try {
-                    const phone = formatWAPhone(sellerPhone);
-                    const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${it.price.toLocaleString('id-ID')}`).join('\n');
+                    const p = formatWAPhone(sellerPhone);
+                    const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${Number(it.price).toLocaleString('id-ID')}`).join('\n');
                     const message = 
 `🛒 *PESANAN BARU MASUK!*
 ━━━━━━━━━━━━━━━━━━━━
@@ -625,43 +651,39 @@ export async function afterRender(params) {
 🧾 *Detail Pesanan:*
 ${itemList}
 
-💰 *Total: Rp ${totalPrice.toLocaleString('id-ID')}*
+💰 *Total: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
 ━━━━━━━━━━━━━━━━━━━━
 Silakan cek & proses pesanan di:
 🔗 https://umkm-kemnaker.vercel.app/#/dashboard`;
 
                     // 1. Kirim pesan teks rincian pesanan ke penjual
-                    const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'apikey': EVOLUTION_APIKEY
                         },
-                        body: JSON.stringify({ number: phone, textMessage: { text: message } })
-                    });
-                    const resData = await res.json().catch(() => ({}));
-                    console.log('Evolution API Response (Seller Text):', res.status, JSON.stringify(resData));
+                        body: JSON.stringify({ number: p, textMessage: { text: message } })
+                    }).catch(() => {});
 
                     // 2. Jika ada bukti pembayaran (Transfer / QRIS), kirim gambar bukti ke penjual
                     if (paymentProof) {
                         const cleanBase64 = paymentProof.includes(',') ? paymentProof.split(',')[1] : paymentProof;
-                        const mediaRes = await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+                        await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'apikey': EVOLUTION_APIKEY
                             },
                             body: JSON.stringify({
-                                number: phone,
+                                number: p,
                                 mediaMessage: {
                                     mediatype: 'image',
                                     caption: `🧾 *Bukti Pembayaran:* ${orderId} (${paymentMethodLabel})`,
                                     media: cleanBase64
                                 }
                             })
-                        });
-                        const mediaData = await mediaRes.json().catch(() => ({}));
-                        console.log('Evolution API Response (Seller Proof Image):', mediaRes.status, JSON.stringify(mediaData));
+                        }).catch(() => {});
                     }
                 } catch (err) {
                     console.warn('WA seller notification gagal (non-critical):', err.message);
@@ -670,8 +692,8 @@ Silakan cek & proses pesanan di:
 
             const sendBuyerWANotification = async (buyerPhone, buyerName, sellerName, orderId, items, totalPrice, deliveryInfo, paymentMethodLabel) => {
                 try {
-                    const phone = formatWAPhone(buyerPhone);
-                    const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${it.price.toLocaleString('id-ID')}`).join('\n');
+                    const p = formatWAPhone(buyerPhone);
+                    const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${Number(it.price).toLocaleString('id-ID')}`).join('\n');
                     const message = 
 `Halo Kak *${buyerName}*,
 
@@ -685,29 +707,28 @@ Terima kasih banyak sudah jajan di *UMKM Pegawai Kemnaker*! 🙏
 🧾 *Detail Pesanan:*
 ${itemList}
 
-💰 *Total: Rp ${totalPrice.toLocaleString('id-ID')}*
+💰 *Total: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
 ━━━━━━━━━━━━━━━━━━━━
 Pesanan Kakak telah kami teruskan ke pihak penjual. Mohon kesediaannya untuk menunggu respon dan konfirmasi pesanan dari penjual ya Kak.
 
 Pantau status pesanan Kakak di sini:
 🔗 https://umkm-kemnaker.vercel.app/#/orders`;
 
-                    const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'apikey': EVOLUTION_APIKEY
                         },
-                        body: JSON.stringify({ number: phone, textMessage: { text: message } })
-                    });
-                    const resData = await res.json().catch(() => ({}));
-                    console.log('Evolution API Response (Buyer Text):', res.status, JSON.stringify(resData));
+                        body: JSON.stringify({ number: p, textMessage: { text: message } })
+                    }).catch(() => {});
                 } catch (err) {
                     console.warn('WA buyer notification gagal (non-critical):', err.message);
                 }
             };
 
-            const executeCreateOrders = async (paymentProof = null) => {
+            const executeCreateOrders = async (paymentProof = null, forcedMethod = null) => {
+                const activePaymentMethod = forcedMethod || selectedMethod || 'cod';
                 showToast('Memproses pesanan, mohon tunggu...', 'info');
                 try {
                     // Generate custom order ID in format SO.YYYY-MM.NNNN
@@ -735,78 +756,82 @@ Pantau status pesanan Kakak di sini:
                     }
 
                     const paymentLabels = { transfer: 'Transfer Bank', qris: 'QRIS', cod: 'COD / Bayar di Tempat' };
-                    const paymentMethodLabel = paymentLabels[selectedMethod] || selectedMethod;
+                    const paymentMethodLabel = paymentLabels[activePaymentMethod] || activePaymentMethod;
 
                     let serialOffset = 0;
                     for (const sellerId of Object.keys(sellerItems)) {
-                    const currentSerial = nextNum + serialOffset;
-                    const nextNumStr = String(currentSerial).padStart(4, '0');
-                    const customOrderId = `${prefix}${nextNumStr}`;
-                    serialOffset++;
+                        const currentSerial = nextNum + serialOffset;
+                        const nextNumStr = String(currentSerial).padStart(4, '0');
+                        const customOrderId = `${prefix}${nextNumStr}`;
+                        serialOffset++;
 
-                    const items = sellerItems[sellerId];
-                    const totalPrice = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-                    
-                    await Store.addOrder({
-                        id: customOrderId,
-                        buyerId: user.id,
-                        sellerId: sellerId,
-                        items: items,
-                        totalPrice: totalPrice,
-                        address: fullAddress,
-                        paymentMethod: selectedMethod,
-                        paymentProof: paymentProof,
-                        orderDate: now.toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }),
-                        status: 'pending'
-                    });
+                        const items = sellerItems[sellerId];
+                        const totalPrice = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                        
+                        await Store.addOrder({
+                            id: customOrderId,
+                            buyerId: user.id || '',
+                            sellerId: sellerId || '',
+                            items: items.map(it => ({
+                                productId: it.productId || '',
+                                name: it.name || '',
+                                price: Number(it.price) || 0,
+                                qty: Number(it.qty) || 1,
+                                image: it.image || ''
+                            })),
+                            totalPrice: totalPrice,
+                            address: fullAddress,
+                            paymentMethod: activePaymentMethod,
+                            paymentProof: paymentProof || null,
+                            orderDate: now.toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+                            status: 'pending'
+                        });
 
-                    // Ambil data penjual & lapak
-                    let sellerPhone = null;
-                    let sellerName = 'Penjual';
+                        // Ambil data penjual & lapak
+                        let sellerPhone = null;
+                        let sellerName = 'Penjual';
 
-                    const sellerData = await Store.getUser(sellerId);
-                    if (sellerData?.phone) {
-                        sellerPhone = sellerData.phone;
-                        sellerName = sellerData.name || sellerName;
-                    } else {
-                        const lapakData = await Store.getLapak(sellerId);
-                        if (lapakData?.phone) {
-                            sellerPhone = lapakData.phone;
-                            sellerName = lapakData.name || sellerName;
+                        const sellerData = await Store.getUser(sellerId);
+                        if (sellerData?.phone) {
+                            sellerPhone = sellerData.phone;
+                            sellerName = sellerData.name || sellerName;
+                        } else {
+                            const lapakData = await Store.getLapak(sellerId);
+                            if (lapakData?.phone) {
+                                sellerPhone = lapakData.phone;
+                                sellerName = lapakData.name || sellerName;
+                            }
                         }
-                    }
 
-                    // 1. Kirim notifikasi WA ke penjual (+ bukti bayar transfer/QRIS jika ada)
-                    if (sellerPhone) {
-                        await sendWANotification(
-                            sellerPhone,
-                            sellerName,
-                            customOrderId,
-                            items,
-                            totalPrice,
-                            user.name,
-                            fullAddress,
-                            paymentMethodLabel,
-                            paymentProof
-                        );
-                    } else {
-                        console.warn('⚠️ Tidak dapat mengirim WA: Nomor HP penjual tidak ditemukan untuk sellerId:', sellerId);
-                    }
+                        // 1. Kirim notifikasi WA ke penjual (asynchronous tanpa block UI)
+                        if (sellerPhone) {
+                            sendWANotification(
+                                sellerPhone,
+                                sellerName,
+                                customOrderId,
+                                items,
+                                totalPrice,
+                                user.name || 'Pembeli',
+                                fullAddress,
+                                paymentMethodLabel,
+                                paymentProof
+                            );
+                        }
 
-                    // 2. Kirim notifikasi WA ke pembeli (ucapan terima kasih & mohon tunggu respon penjual)
-                    const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
-                    if (buyerPhone) {
-                        await sendBuyerWANotification(
-                            buyerPhone,
-                            user.name,
-                            sellerName,
-                            customOrderId,
-                            items,
-                            totalPrice,
-                            fullAddress,
-                            paymentMethodLabel
-                        );
-                    }
+                        // 2. Kirim notifikasi WA ke pembeli (asynchronous tanpa block UI)
+                        const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
+                        if (buyerPhone) {
+                            sendBuyerWANotification(
+                                buyerPhone,
+                                user.name || 'Pembeli',
+                                sellerName,
+                                customOrderId,
+                                items,
+                                totalPrice,
+                                fullAddress,
+                                paymentMethodLabel
+                            );
+                        }
                     }
 
                     Store.clearCart();
@@ -828,6 +853,10 @@ Pantau status pesanan Kakak di sini:
                     () => {
                         // Cancel callback
                         showToast('Pembuatan pesanan dibatalkan', 'info');
+                    },
+                    () => {
+                        // Switch to COD callback
+                        executeCreateOrders(null, 'cod');
                     }
                 );
             } else {

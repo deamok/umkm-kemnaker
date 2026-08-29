@@ -107,7 +107,9 @@ const Store = {
   },
   async addOrder(orderData) {
     const id = orderData.id || 'ord-' + generateId();
-    const newOrder = { ...orderData, createdAt: new Date().toISOString() };
+    // Deep sanitize undefined values to null or empty string to ensure Firestore setDoc never throws
+    const sanitized = JSON.parse(JSON.stringify(orderData, (k, v) => v === undefined ? null : v));
+    const newOrder = { ...sanitized, createdAt: new Date().toISOString() };
     await setDoc(doc(db, this.KEYS.ORDERS, id), newOrder);
     return { id, ...newOrder };
   },
