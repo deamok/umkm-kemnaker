@@ -10,13 +10,14 @@ export async function render() {
     const lapaks = await Store.getAllLapaks();
     const allOrders = await Store.getAllOrders();
     const allUsers = await Store.getUsers();
+    const visitorCount = await Store.getVisitorCount();
     
     // Calculate total sold products
     const totalSold = allProducts.reduce((sum, p) => sum + (p.sold || 0), 0);
     
-    // Generate unique random light colors for 5 cards
+    // Generate unique random light colors for 6 cards
     const lightColors = ['#fef3c7', '#d1fae5', '#dbeafe', '#fce7f3', '#f3e8ff', '#e0e7ff', '#ffedd5', '#ecfdf5', '#fefce8', '#ccfbf1'];
-    const shuffledColors = lightColors.sort(() => 0.5 - Math.random()).slice(0, 5);
+    const shuffledColors = lightColors.sort(() => 0.5 - Math.random()).slice(0, 6);
 
     let lapaksHtml = '';
     let idx = 0;
@@ -82,7 +83,7 @@ export async function render() {
                     <div class="section-header">
                         <h2 class="section-title">Statistik Marketplace</h2>
                     </div>
-                    <div class="dashboard-stats grid grid-2 grid-5 gap-4 mb-5">
+                    <div class="dashboard-stats grid grid-2 grid-6 gap-4 mb-5">
                         <div class="stat-card p-5 card border text-center slide-up delay-1" style="background-color: ${shuffledColors[0]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
                             <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Total Produk</div>
                             <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${allProducts.length}</div>
@@ -91,17 +92,21 @@ export async function render() {
                             <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Produk Terjual</div>
                             <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${totalSold}</div>
                         </div>
-                        <div class="stat-card p-5 card border text-center slide-up delay-3" style="background-color: ${shuffledColors[2]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
+                        <div class="stat-card p-5 card border text-center slide-up delay-3" style="background-color: ${shuffledColors[3]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
                             <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Total Transaksi</div>
                             <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${allOrders.length}</div>
                         </div>
-                        <div class="stat-card p-5 card border text-center slide-up delay-4" style="background-color: ${shuffledColors[3]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
+                        <div class="stat-card p-5 card border text-center slide-up delay-4" style="background-color: ${shuffledColors[4]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
+                            <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Jumlah Warung</div>
+                            <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${lapaks.length}</div>
+                        </div>
+                        <div class="stat-card p-5 card border text-center slide-up delay-5" style="background-color: ${shuffledColors[2]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
                             <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Jumlah Pengguna</div>
                             <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${allUsers.length}</div>
                         </div>
-                        <div class="stat-card p-5 card border text-center slide-up delay-5" style="background-color: ${shuffledColors[4]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
-                            <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Jumlah Warung</div>
-                            <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${lapaks.length}</div>
+                        <div class="stat-card p-5 card border text-center slide-up delay-6" style="background-color: ${shuffledColors[5]}; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; box-shadow: var(--shadow-sm); border-radius: var(--radius-md);">
+                            <div class="text-muted text-sm font-semibold mb-1" style="color: var(--text-secondary);">Total Pengunjung</div>
+                            <div class="stat-value text-3xl font-bold" style="color: var(--accent-primary); font-size: 2rem;">${visitorCount}</div>
                         </div>
                     </div>
                 </div>

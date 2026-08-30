@@ -1,5 +1,5 @@
 import { db } from './firebase-init.js';
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, addDoc, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 import { generateId } from './utils.js';
 
 const Store = {
@@ -350,6 +350,30 @@ const Store = {
       unsubBuyer();
       unsubSeller();
     };
+  },
+
+  async getVisitorCount() {
+    try {
+      const docRef = doc(db, 'stats', 'visitors');
+      
+      if (!sessionStorage.getItem('elapak_visitor_session')) {
+        sessionStorage.setItem('elapak_visitor_session', 'true');
+        try {
+          await updateDoc(docRef, { count: increment(1) });
+        } catch (e) {
+          await setDoc(docRef, { count: 1 }, { merge: true });
+        }
+      }
+      
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data().count || 1;
+      }
+      return 1;
+    } catch (err) {
+      console.warn("Visitor counter fallback:", err);
+      return 1;
+    }
   }
 };
 
