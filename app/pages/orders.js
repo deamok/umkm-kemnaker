@@ -1,7 +1,7 @@
 import Store from '../store.js';
 import Auth from '../auth.js';
 import Router from '../router.js';
-import { showToast, timeAgo, formatIndonesianDate } from '../utils.js';
+import { showToast, timeAgo, formatIndonesianDate, formatRupiah, escapeHtml } from '../utils.js';
 
 export async function render(params) {
     if (!Auth.isLoggedIn()) {
@@ -12,231 +12,130 @@ export async function render(params) {
     const user = await Auth.getCurrentUser();
     const orders = await Store.getOrders(user.id);
 
-    const renderOrderCard = async (order) => {
+    const renderBuyerOrderRow = async (order, index) => {
+        const sellerLapak = await Store.getLapak(order.sellerId);
+        const seller = await Store.getUser(order.sellerId);
+        const sellerName = sellerLapak?.name || seller?.warungName || seller?.name || 'Lapak tidak diketahui';
+
         const statusMap = {
-            'pending': { label: 'menunggu..', class: 'bg-yellow-100 text-yellow-800 border-yellow-200', bannerBg: '#d1fae5', bannerColor: '#065f46', bannerBorder: '#bbf7d0' },
-            'processing': { label: 'Diproses', class: 'bg-blue-100 text-blue-800 border-blue-200', bannerBg: '#d1fae5', bannerColor: '#065f46', bannerBorder: '#bbf7d0' },
-            'shipped': { label: 'Dikirim', class: 'bg-teal-100 text-teal-800 border-teal-200', bannerBg: '#d1fae5', bannerColor: '#065f46', bannerBorder: '#bbf7d0' },
-            'completed': { label: 'Selesai', class: 'bg-green-100 text-green-800 border-green-200', bannerBg: '#d1fae5', bannerColor: '#065f46', bannerBorder: '#bbf7d0' },
-            'cancelled': { label: 'transaksi dibatalkan penjual', class: 'bg-red-100 text-red-800 border-red-200', bannerBg: '#fee2e2', bannerColor: '#b91c1c', bannerBorder: '#fecaca' }
+            'pending': 'menunggu',
+            'processing': 'proses',
+            'shipped': 'kirim',
+            'completed': 'selesai',
+            'cancelled': 'dibatalkan'
         };
+        const displayStatus = statusMap[order.status] || order.status;
 
-        const statusInfo = statusMap[order.status] || statusMap['pending'];
-        const seller = await Store.getLapak(order.sellerId);
-        const sellerName = seller ? seller.name : 'Lapak tidak diketahui';
-
-        // Date format: hari, dd/mm/yy ; hh:mm:ss
-        const dateObj = new Date(order.createdAt);
-        const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-        const dayName = dayNames[dateObj.getDay()];
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const yy = String(dateObj.getFullYear()).substring(2);
-        const hh = String(dateObj.getHours()).padStart(2, '0');
-        const min = String(dateObj.getMinutes()).padStart(2, '0');
-        const ss = String(dateObj.getSeconds()).padStart(2, '0');
-        const orderDateStr = `${dayName}, ${dd}/${mm}/${yy} ; ${hh}:${min}:${ss}`;
+        const savedDate = order.estimatedDelivery || '';
+        const formattedSavedDate = savedDate ? formatIndonesianDate(savedDate, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
         const paymentMethodLabel = {
             'transfer': 'Transfer Bank',
             'qris': 'QRIS',
-            'cod': 'COD (Bayar di Tempat)'
+            'cod': 'COD'
         }[order.paymentMethod] || order.paymentMethod || '-';
 
-        let paymentStatusHtml = '';
-        if (order.status === 'cancelled') {
-            if (order.paymentMethod === 'transfer' || order.paymentMethod === 'qris') {
-                paymentStatusHtml = `
-                    <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-sm">
-                        <div class="flex items-center justify-between" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <span class="text-muted text-xs block">Metode Pembayaran</span>
-                                <span class="font-bold text-gray-800">${paymentMethodLabel}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-muted text-xs block">Status Pembayaran</span>
-                                <span class="badge bg-red-100 text-red-800 border-red-200 border px-2 py-0.5 text-xs font-bold" style="border-radius: 4px;">dana akan ditransfer balik oleh penjual</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                paymentStatusHtml = `
-                    <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-sm">
-                        <div class="flex items-center justify-between" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <span class="text-muted text-xs block">Metode Pembayaran</span>
-                                <span class="font-bold text-gray-800">${paymentMethodLabel}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-muted text-xs block">Status Pembayaran</span>
-                                <span class="badge bg-red-100 text-red-800 border-red-200 border px-2 py-0.5 text-xs font-bold" style="border-radius: 4px;">- dibatalkan -</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        } else if (order.paymentMethod === 'transfer' || order.paymentMethod === 'qris') {
-            paymentStatusHtml = `
-                <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md text-sm">
-                    <div class="flex items-center justify-between" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <div>
-                            <span class="text-muted text-xs block">Metode Pembayaran</span>
-                            <span class="font-bold text-gray-800">${paymentMethodLabel}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-muted text-xs block">Status Pembayaran</span>
-                            <span class="badge bg-green-100 text-green-800 border-green-200 border px-2 py-0.5 text-xs font-bold" style="border-radius: 4px;">LUNAS</span>
-                        </div>
-                    </div>
-                    ${order.paymentProof ? `
-                        <div class="mt-3 border-t border-green-100 pt-3">
-                            <span class="text-xs text-muted block mb-1 font-semibold">Bukti Pembayaran:</span>
-                            <div style="text-align: left;">
-                                <img src="${order.paymentProof}" alt="Bukti Pembayaran" style="max-height: 180px; max-width: 100%; border-radius: 6px; border: 1px solid #c2f0c2; object-fit: contain; background: white;" />
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        } else {
-            if (order.status === 'completed') {
-                paymentStatusHtml = `
-                    <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md text-sm">
-                        <div class="flex items-center justify-between" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <span class="text-muted text-xs block">Metode Pembayaran</span>
-                                <span class="font-bold text-gray-800">${paymentMethodLabel}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-muted text-xs block">Status Pembayaran</span>
-                                <span class="badge bg-green-100 text-green-800 border-green-200 border px-2 py-0.5 text-xs font-bold" style="border-radius: 4px;">LUNAS</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                paymentStatusHtml = `
-                    <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
-                        <div class="flex items-center justify-between" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <span class="text-muted text-xs block">Metode Pembayaran</span>
-                                <span class="font-bold text-gray-800">${paymentMethodLabel}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-muted text-xs block">Status Pembayaran</span>
-                                <span class="badge bg-yellow-100 text-yellow-800 border-yellow-200 border px-2 py-0.5 text-xs font-bold" style="border-radius: 4px;">menunggu...</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        let actionHtml = '';
-        if (order.status === 'shipped') {
-            actionHtml = `<button class="btn btn-sm btn-primary btn-confirm-order md:w-auto" style="width: 100%;" data-id="${order.id}">Konfirmasi Diterima</button>`;
-        } else if (order.status === 'pending') {
-            actionHtml = `<button class="btn btn-sm btn-danger btn-cancel-order md:w-auto" style="width: 100%;" data-id="${order.id}">Batalkan Pesanan</button>`;
-        }
-
         return `
-            <div class="order-card card mb-4 overflow-hidden border hover:shadow-md transition-shadow">
-                <div class="order-header p-4 border-b flex flex-col gap-1">
-                    <div class="order-id font-mono font-semibold text-secondary" style="white-space: nowrap; font-size: 10pt;">Order ID: ${order.id}</div>
-                    <div class="text-muted" style="font-size: 10pt;">${orderDateStr}</div>
-                    ${order.estimatedDelivery ? `
-                    <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 font-semibold flex flex-col gap-1">
-                        <span>📦 Barang akan mendarat di meja:</span>
-                        <span class="text-blue-900 font-bold">${formatIndonesianDate(order.estimatedDelivery, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} ${order.deliveryTime ? `(${order.deliveryTime})` : ''}</span>
-                    </div>
-                    ` : ''}
-                </div>
-                
-                <!-- Status Pemesanan Box di bawah tanggal (selebar halaman/card, background dinamis, tinggi otomatis) -->
-                <div style="background-color: ${statusInfo.bannerBg || '#d1fae5'}; color: ${statusInfo.bannerColor || '#065f46'}; padding: 10px 16px; font-weight: 700; text-align: center; font-size: 12pt; border-bottom: 1px solid ${statusInfo.bannerBorder || '#bbf7d0'}; width: 100%; line-height: normal;">
-                    ${statusInfo.label}
-                </div>
+            <tr class="border-b hover:bg-gray-100 transition-colors cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                <td class="font-semibold text-sm text-center" style="padding: 6px;">${index + 1}</td>
+                <td class="text-left" style="padding: 6px;">
+                    <div class="font-semibold text-primary text-sm">#${order.id}</div>
+                    <div class="text-sm text-muted">${timeAgo(order.createdAt)}</div>
+                </td>
+                <td class="font-semibold text-sm text-left" style="padding: 6px;">${escapeHtml(sellerName)}</td>
+                <td class="font-bold text-primary text-sm text-right" style="padding: 6px; padding-right: 12px;">${formatRupiah(order.totalPrice)}</td>
+                <td class="text-center" style="padding: 6px;">
+                    <span class="badge px-2 py-1 text-sm font-semibold capitalize text-secondary border border-gray-200 bg-gray-100" style="font-size: 14px; border-radius: var(--radius-full);">${displayStatus}</span>
+                </td>
+                <td class="text-center" style="padding: 6px;">
+                    <button class="btn btn-sm btn-outline text-sm">Detail <i data-lucide="chevron-down" class="w-4 h-4 inline"></i></button>
+                </td>
+            </tr>
+            <tr class="hidden bg-gray-50 border-b">
+                <td colspan="6" style="padding: 0;">
+                    <div style="position: sticky; left: 0; width: calc(100vw - 56px); max-width: 100%; box-sizing: border-box; padding: 6px; padding-left: 0;">
+                        <div class="card p-3 md:p-4 border bg-white shadow-sm flex flex-col md:flex-row gap-4 text-sm" style="text-align: left; width: 100%; box-sizing: border-box; overflow: hidden;">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-sm mb-2 text-gray-700">Daftar Item:</h4>
+                                <ul class="list-disc pl-4 text-sm space-y-1 mb-2">
+                                    ${order.items.map(i => `<li>${i.qty}x ${escapeHtml(i.name)} - ${formatRupiah(i.price)}</li>`).join('')}
+                                </ul>
+                                <div class="font-bold text-sm mt-2 text-primary border-t pt-2 border-gray-100 mb-3">Total: ${formatRupiah(order.totalPrice)}</div>
+                                
+                                <h4 class="font-bold text-sm mb-2 text-gray-700">Pembayaran:</h4>
+                                <div class="text-sm space-y-1">
+                                    <div><span class="text-gray-500">Metode:</span> <span class="font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50">${paymentMethodLabel}</span></div>
+                                    ${((order.paymentMethod === 'transfer' || order.paymentMethod === 'qris') && order.paymentProof) ? `
+                                        <div class="mt-2">
+                                            <div class="text-gray-500 mb-1">Bukti Bayar:</div>
+                                            <a href="${order.paymentProof}" target="_blank" class="inline-block" title="Klik untuk memperbesar">
+                                                <img src="${order.paymentProof}" class="border rounded-md shadow-sm cursor-pointer hover:opacity-90 transition-opacity" style="max-height: 120px; max-width: 100%; object-fit: contain; background: #f9fafb;">
+                                            </a>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <div class="flex-1" style="min-width: 250px;">
+                                <h4 class="font-bold text-sm mb-2 text-gray-700">Aksi & Pengiriman:</h4>
+                                ${order.estimatedDelivery ? `
+                                    <div class="mb-3 p-2 rounded-lg text-sm" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                                        <div class="font-semibold" style="color: #15803d;">Estimasi Tiba:</div>
+                                        <div class="font-bold" style="color: #166534;">${formattedSavedDate} ${order.deliveryTime ? `(${order.deliveryTime})` : ''}</div>
+                                    </div>
+                                ` : `
+                                    <div class="mb-3 p-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-600">
+                                        Waktu pengiriman belum diatur oleh penjual
+                                    </div>
+                                `}
 
-                <div class="order-body p-4">
-                    <!-- Nama Warung dan tombol chat -->
-                    <div class="text-sm font-semibold text-secondary mb-3" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                        <span>Nama warung : ${sellerName}</span>
-                        <button class="btn-chat-seller-order flex items-center gap-1 text-xs font-semibold border border-primary text-primary hover:bg-primary hover:text-white transition-colors" 
-                                style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; cursor: pointer; background: none; font-size: 12px; color: var(--accent-primary); border: 1px solid var(--accent-primary);"
-                                data-sellerid="${order.sellerId}" data-sellername="${sellerName}" data-buyerid="${order.buyerId}">
-                            <i data-lucide="message-square" style="width: 13px; height: 13px;"></i>
-                            Chat Penjual
-                        </button>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    ${order.status === 'shipped' ? `<button class="btn btn-sm btn-primary btn-confirm-order text-sm px-3 py-1.5" data-id="${order.id}">Konfirmasi Diterima</button>` : ''}
+                                    ${order.status === 'pending' ? `<button class="btn btn-sm btn-danger btn-cancel-order text-sm px-3 py-1.5" data-id="${order.id}">Batalkan Pesanan</button>` : ''}
+                                    <button class="btn-chat-seller-order btn btn-sm btn-outline text-sm px-3 py-1.5 flex items-center gap-1" 
+                                            data-sellerid="${order.sellerId}" data-sellername="${escapeHtml(sellerName)}" data-buyerid="${order.buyerId}">
+                                        <i data-lucide="message-square" class="w-4 h-4 inline"></i> Chat Penjual
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Tabel mepet kiri, lebar disesuaikan dengan isi (1 baris / nowrap), lebar boleh melewati layar -->
-                    <div style="overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; width: 100%;">
-                        <table class="text-sm text-left text-gray-700" style="width: max-content; border-collapse: collapse; margin-left: 0; padding-left: 0;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <th style="padding: 8px 12px 8px 0; text-align: left; white-space: nowrap;">No.</th>
-                                    <th style="padding: 8px 12px; text-align: left; white-space: nowrap;">Produk</th>
-                                    <th style="padding: 8px 12px; text-align: center; white-space: nowrap;">Qty</th>
-                                    <th style="padding: 8px 12px; text-align: right; white-space: nowrap;">Harga</th>
-                                    <th style="padding: 8px 12px; text-align: right; white-space: nowrap;">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${order.items.map((item, index) => {
-                                    const itemSubtotal = item.price * item.qty;
-                                    return `
-                                        <tr style="border-bottom: 1px solid #f3f4f6;">
-                                            <td style="padding: 8px 12px 8px 0; text-align: left; white-space: nowrap;">${index + 1}.</td>
-                                            <td style="padding: 8px 12px; text-align: left; white-space: nowrap;">${item.name}</td>
-                                            <td style="padding: 8px 12px; text-align: center; white-space: nowrap;">${item.qty}</td>
-                                            <td style="padding: 8px 12px; text-align: right; white-space: nowrap;">Rp ${item.price.toLocaleString('id-ID')}</td>
-                                            <td style="padding: 8px 12px; text-align: right; font-weight: 600; white-space: nowrap;">Rp ${itemSubtotal.toLocaleString('id-ID')}</td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Posisi Total Bayar di bawah tabel -->
-                    <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; margin-top: 12px; margin-bottom: 12px;">
-                        <span class="text-sm text-muted">Total Bayar:</span>
-                        <span class="text-lg font-bold text-primary">Rp ${order.totalPrice.toLocaleString('id-ID')}</span>
-                    </div>
-
-                    ${paymentStatusHtml}
-                </div>
-
-                ${actionHtml ? `
-                <div class="order-footer p-4 border-t flex justify-end">
-                    ${actionHtml}
-                </div>
-                ` : ''}
-            </div>
+                </td>
+            </tr>
         `;
     };
 
     return `
         <div class="orders-page container mt-6 mb-10 fade-in">
-            <h1 class="text-2xl font-heading font-bold mb-5 flex flex-center"><i data-lucide="package" class="mr-2 text-primary w-6 h-6"></i> Pesanan Saya</h1>
+            <h1 class="text-2xl font-heading font-bold mb-5 flex items-center"><i data-lucide="package" class="mr-2 text-primary w-6 h-6"></i> Pesanan Saya</h1>
             
-            <div class="mx-auto" style="max-width: 48rem;">
-                ${orders.length > 0 ? `
-                    <div class="order-list">
-                        ${(await Promise.all(orders.sort((a,b) => b.createdAt - a.createdAt).map(o => renderOrderCard(o)))).join('')}
+            ${orders.length > 0 ? `
+                <div class="border rounded-lg" style="overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch;">
+                    <table class="w-full table-fixed text-left border-collapse text-sm font-sans" style="min-width: 700px;">
+                        <thead class="border-b">
+                            <tr>
+                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 5%; padding: 6px; background-color: #f8fafc;">No.</th>
+                                <th class="text-sm font-semibold text-gray-700 text-left" style="width: 30%; padding: 6px; background-color: #eff6ff;">ID & Waktu</th>
+                                <th class="text-sm font-semibold text-gray-700 text-left" style="width: 15%; padding: 6px; background-color: #f0fdf4;">Penjual</th>
+                                <th class="text-sm font-semibold text-gray-700 text-right" style="width: 20%; padding: 6px; padding-right: 12px; background-color: #fefce8;">Total Pesanan</th>
+                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 15%; padding: 6px; background-color: #faf5ff;">Status</th>
+                                <th class="text-sm font-semibold text-gray-700 text-center" style="width: 15%; padding: 6px; background-color: #fff1f2;">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(await Promise.all(orders.sort((a,b)=>b.createdAt-a.createdAt).map((order, index) => renderBuyerOrderRow(order, index)))).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : `
+                <div class="empty-state text-center py-16 card border">
+                    <div class="flex flex-center justify-center mx-auto mb-4" style="width: 5rem; height: 5rem; border-radius: var(--radius-full);">
+                        <i data-lucide="shopping-bag" class="w-10 h-10 text-muted"></i>
                     </div>
-                ` : `
-                    <div class="empty-state text-center py-16 card border">
-                        <div class="flex flex-center justify-center mx-auto mb-4" style="width: 5rem; height: 5rem; border-radius: var(--radius-full);">
-                            <i data-lucide="shopping-bag" class="w-10 h-10 text-muted"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-secondary">Belum ada pesanan</h3>
-                        <p class="text-muted mt-2 mb-5">Anda belum pernah melakukan pemesanan.</p>
-                        <a href="#/" class="btn btn-primary px-6 py-2 card inline-flex flex-center">Mulai Belanja <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i></a>
-                    </div>
-                `}
-            </div>
+                    <h3 class="text-xl font-bold text-secondary">Belum ada pesanan</h3>
+                    <p class="text-muted mt-2 mb-5">Anda belum pernah melakukan pemesanan.</p>
+                    <a href="#/" class="btn btn-primary px-6 py-2 card inline-flex flex-center">Mulai Belanja <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i></a>
+                </div>
+            `}
         </div>
     `;
 }
@@ -250,7 +149,7 @@ export async function afterRender(params) {
                 const id = e.target.closest('button').dataset.id;
                 await Store.updateOrderStatus(id, 'completed');
                 showToast('Pesanan telah diselesaikan!', 'success');
-                Router.handleRoute(); // Force a refresh of the page
+                Router.handleRoute();
             }
         });
     });
@@ -261,12 +160,11 @@ export async function afterRender(params) {
                 const id = e.target.closest('button').dataset.id;
                 await Store.updateOrderStatus(id, 'cancelled');
                 showToast('Pesanan dibatalkan.', 'info');
-                Router.handleRoute(); // Force a refresh of the page
+                Router.handleRoute();
             }
         });
     });
 
-    // Handler tombol Chat Penjual dari halaman pesanan
     document.querySelectorAll('.btn-chat-seller-order').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const button = e.target.closest('button');
