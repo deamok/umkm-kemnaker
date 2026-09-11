@@ -657,19 +657,22 @@ Silakan cek & proses pesanan di:
 🔗 https://umkm-kemnaker.vercel.app/#/dashboard`;
 
                     // 1. Kirim pesan teks rincian pesanan ke penjual
-                    await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    console.log('Mengirim notifikasi WA ke Penjual:', p);
+                    const resText = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'apikey': EVOLUTION_APIKEY
                         },
                         body: JSON.stringify({ number: p, textMessage: { text: message } })
-                    }).catch(() => {});
+                    });
+                    const dataText = await resText.json().catch(() => ({}));
+                    console.log('Evolution API Response (Seller Text):', resText.status, dataText);
 
                     // 2. Jika ada bukti pembayaran (Transfer / QRIS), kirim gambar bukti ke penjual
                     if (paymentProof) {
                         const cleanBase64 = paymentProof.includes(',') ? paymentProof.split(',')[1] : paymentProof;
-                        await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+                        const resMedia = await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -683,10 +686,12 @@ Silakan cek & proses pesanan di:
                                     media: cleanBase64
                                 }
                             })
-                        }).catch(() => {});
+                        });
+                        const dataMedia = await resMedia.json().catch(() => ({}));
+                        console.log('Evolution API Response (Seller Media):', resMedia.status, dataMedia);
                     }
                 } catch (err) {
-                    console.warn('WA seller notification gagal (non-critical):', err.message);
+                    console.error('WA seller notification gagal:', err);
                 }
             };
 
@@ -714,16 +719,19 @@ Pesanan Kakak telah kami teruskan ke pihak penjual. Mohon kesediaannya untuk men
 Pantau status pesanan Kakak di sini:
 🔗 https://umkm-kemnaker.vercel.app/#/orders`;
 
-                    await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    console.log('Mengirim notifikasi WA ke Pembeli:', p);
+                    const resBuyer = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'apikey': EVOLUTION_APIKEY
                         },
                         body: JSON.stringify({ number: p, textMessage: { text: message } })
-                    }).catch(() => {});
+                    });
+                    const dataBuyer = await resBuyer.json().catch(() => ({}));
+                    console.log('Evolution API Response (Buyer Text):', resBuyer.status, dataBuyer);
                 } catch (err) {
-                    console.warn('WA buyer notification gagal (non-critical):', err.message);
+                    console.error('WA buyer notification gagal:', err);
                 }
             };
 
@@ -803,9 +811,12 @@ Pantau status pesanan Kakak di sini:
                             }
                         }
 
-                        // 1. Kirim notifikasi WA ke penjual (asynchronous tanpa block UI)
+                        // 1. Kirim notifikasi WA ke penjual
+                        const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
+                        const promises = [];
+
                         if (sellerPhone) {
-                            sendWANotification(
+                            promises.push(sendWANotification(
                                 sellerPhone,
                                 sellerName,
                                 customOrderId,
@@ -815,13 +826,12 @@ Pantau status pesanan Kakak di sini:
                                 fullAddress,
                                 paymentMethodLabel,
                                 paymentProof
-                            );
+                            ));
                         }
 
-                        // 2. Kirim notifikasi WA ke pembeli (asynchronous tanpa block UI)
-                        const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
+                        // 2. Kirim notifikasi WA ke pembeli
                         if (buyerPhone) {
-                            sendBuyerWANotification(
+                            promises.push(sendBuyerWANotification(
                                 buyerPhone,
                                 user.name || 'Pembeli',
                                 sellerName,
@@ -830,7 +840,12 @@ Pantau status pesanan Kakak di sini:
                                 totalPrice,
                                 fullAddress,
                                 paymentMethodLabel
-                            );
+                            ));
+                        }
+
+                        // Tunggu semua notifikasi WA terkirim sebelum pindah halaman
+                        if (promises.length > 0) {
+                            await Promise.allSettled(promises);
                         }
                     }
 
