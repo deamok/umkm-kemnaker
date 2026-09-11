@@ -189,11 +189,11 @@ export function afterRender(params) {
                                     const resetLink = `https://umkm-kemnaker.vercel.app/#/login?reset=${user.id}&token=${resetToken}`;
                                     const text = `Halo Kak *${user.name}*,\n\nSilakan klik tautan berikut untuk mengubah kata sandi akun e-lapak Anda:\n\n${resetLink}\n\nAbaikan pesan ini jika Anda tidak merasa meminta reset kata sandi.`;
                                     
-                                    const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/umkm_vercel-app`, {
+                                    const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/New-one`, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
-                                            'apikey': 'cqpj5ch0avno6u7w0z67b'
+                                            'apikey': '5nbns1qqqp8yevzqu4qiug'
                                         },
                                         body: JSON.stringify({ number: waPhone, textMessage: { text: text } })
                                     });

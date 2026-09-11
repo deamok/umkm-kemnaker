@@ -626,8 +626,8 @@ export async function afterRender(params) {
 
             // Kirim notifikasi WhatsApp ke penjual & pembeli via Evolution API
             const EVOLUTION_URL = 'https://wa.cilebut-one.cloud';
-            const EVOLUTION_APIKEY = 'cqpj5ch0avno6u7w0z67b';
-            const EVOLUTION_INSTANCE = 'umkm_vercel-app';
+            const EVOLUTION_APIKEY = '5nbns1qqqp8yevzqu4qiug';
+            const EVOLUTION_INSTANCE = 'New-one';
 
             const formatWAPhone = (rawPhone) => {
                 let p = String(rawPhone || '').replace(/\D/g, '');

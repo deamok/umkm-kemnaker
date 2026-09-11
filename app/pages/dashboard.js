@@ -952,11 +952,11 @@ export async function afterRender(params) {
                             }
                             
                             if (text) {
-                                const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/umkm_vercel-app`, {
+                                const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/New-one`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'apikey': 'cqpj5ch0avno6u7w0z67b'
+                                        'apikey': '5nbns1qqqp8yevzqu4qiug'
                                     },
                                     body: JSON.stringify({ number: phone, textMessage: { text: text } })
                                 });
