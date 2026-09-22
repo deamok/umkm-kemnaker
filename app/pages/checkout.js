@@ -579,7 +579,8 @@ export async function afterRender(params) {
     const btnSubmit = document.getElementById('btn-buat-pesanan');
     if (btnSubmit) {
         btnSubmit.addEventListener('click', async () => {
-            const methodRadios = document.getElementsByName('delivery_method');
+            try {
+                const methodRadios = document.getElementsByName('delivery_method');
             let deliveryType = 'antar';
             for (let r of methodRadios) {
                 if (r.checked) deliveryType = r.value;
@@ -629,7 +630,7 @@ export async function afterRender(params) {
             // Group by seller with robust fallbacks
             for (const cartItem of cart) {
                 const product = await Store.getProduct(cartItem.productId);
-                const sId = product?.sellerId || sellerId || 'default_seller';
+                const sId = product?.sellerId || seller?.id || 'default_seller';
                 if (!sellerItems[sId]) {
                     sellerItems[sId] = [];
                 }
@@ -774,6 +775,9 @@ Pantau status pesanan Kakak di sini:
             const executeCreateOrders = async (paymentProof = null, forcedMethod = null) => {
                 const activePaymentMethod = forcedMethod || selectedMethod || 'cod';
                 showToast('Memproses pesanan, mohon tunggu...', 'info');
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = `<span style="display:inline-block; animation:spin 1s linear infinite; margin-right:8px;">⏳</span> Memproses...`;
+
                 try {
                     // Generate custom order ID in format SO.YYYY-MM.NNNN
                     const now = new Date();
@@ -850,7 +854,8 @@ Pantau status pesanan Kakak di sini:
                         }
 
                         // 1. Kirim notifikasi WA ke penjual
-                        const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
+                        const buyerPhone = phone || user.phone || document.getElementById('checkout-phone')?.value;
+                        const buyerName = name || user.name || 'Pembeli';
 
                         if (sellerPhone) {
                             waPromises.push(sendWANotification(
@@ -859,7 +864,7 @@ Pantau status pesanan Kakak di sini:
                                 customOrderId,
                                 items,
                                 totalPrice,
-                                user.name || 'Pembeli',
+                                buyerName,
                                 fullAddress,
                                 paymentMethodLabel,
                                 paymentProof
@@ -870,7 +875,7 @@ Pantau status pesanan Kakak di sini:
                         if (buyerPhone) {
                             waPromises.push(sendBuyerWANotification(
                                 buyerPhone,
-                                user.name || 'Pembeli',
+                                buyerName,
                                 sellerName,
                                 customOrderId,
                                 items,
@@ -892,9 +897,14 @@ Pantau status pesanan Kakak di sini:
                     }
                 } catch(e) {
                     console.error("Kesalahan saat checkout:", e);
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = `Buat Pesanan <i data-lucide="arrow-right" class="ml-2 w-5 h-5 inline" style="display:inline-block; vertical-align:middle;"></i>`;
+                    if (window.lucide) window.lucide.createIcons();
                     showToast('Gagal memproses pesanan: ' + e.message, 'error');
                 }
             };
+
+            const isCodAvailable = !!document.querySelector('.payment-option[data-method="cod"]');
 
             if (selectedMethod === 'transfer' || selectedMethod === 'qris') {
                 // Show modal for proof upload
@@ -911,12 +921,19 @@ Pantau status pesanan Kakak di sini:
                         // Switch to COD callback
                         executeCreateOrders(null, 'cod');
                     },
-                    showCod
+                    isCodAvailable
                 );
             } else {
                 // COD - proceed immediately
                 await executeCreateOrders();
             }
-        });
+        } catch (err) {
+            console.error("Kesalahan pada tombol buat pesanan:", err);
+            showToast("Terjadi kesalahan: " + (err.message || err), "error");
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `Buat Pesanan <i data-lucide="arrow-right" class="ml-2 w-5 h-5 inline" style="display:inline-block; vertical-align:middle;"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    });
     }
 }
