@@ -21,7 +21,8 @@ export async function render(params) {
     const sellerId = firstProduct?.sellerId || '';
     const seller = sellerId ? (await Store.getUser(sellerId) || { name: 'Penjual', phone: '-', address: '-' }) : { name: 'Penjual', phone: '-', address: '-' };
     const sellerLapak = sellerId ? (await Store.getLapak(sellerId) || {}) : {};
-    const userUnit = user.eselon2 || user.eselon1 || '';
+    const userUnit = user.eselon2 || user.eselon1 || user.bagian || '';
+    const hasSavedAddress = !!(user.address && user.address.trim());
 
     // Determine which payment methods are enabled (fallback to showing all if none are set)
     const hasPaymentSettings = sellerLapak && (sellerLapak.paymentTransfer || sellerLapak.paymentQris || sellerLapak.paymentCod);
@@ -120,7 +121,7 @@ export async function render(params) {
                         <div class="card-body">
                             <div class="flex justify-between align-center mb-4 pb-2 border-b" style="display: flex; justify-content: space-between; align-items: center;">
                                 <h2 class="text-xl font-heading font-bold text-gray-800 flex flex-center mb-0" style="margin: 0;"><span style="vertical-align:middle;">Lokasi Pengiriman</span></h2>
-                                <button type="button" id="btn-edit-address" class="btn btn-sm btn-outline px-3 py-1.5 font-semibold text-xs flex align-center" style="border-radius: var(--radius-sm);"><i data-lucide="edit" class="w-3.5 h-3.5 mr-1 inline" style="display:inline-block; vertical-align:middle;"></i> <span style="vertical-align:middle;">Edit</span></button>
+                                <button type="button" id="btn-edit-address" class="btn btn-sm btn-outline px-3 py-1.5 font-semibold text-xs flex align-center" style="border-radius: var(--radius-sm); ${hasSavedAddress ? '' : 'display: none;'}"><i data-lucide="edit" class="w-3.5 h-3.5 mr-1 inline" style="display:inline-block; vertical-align:middle;"></i> <span style="vertical-align:middle;">Edit</span></button>
                             </div>
 
                             <!-- Radio buttons (Always visible so user can choose method) -->
@@ -137,18 +138,18 @@ export async function render(params) {
                             </div>
 
                             <!-- View Container (Read-Only) -->
-                            <div id="address-view-container" class="flex flex-col gap-3" 
-                                 data-user-name="${user.name}" 
+                            <div id="address-view-container" class="flex flex-col gap-3 ${hasSavedAddress ? '' : 'hidden'}" 
+                                 data-user-name="${user.name || ''}" 
                                  data-user-phone="${user.phone || ''}" 
                                  data-user-address="${user.address || ''}"
-                                 data-seller-name="${seller.name}" 
+                                 data-seller-name="${seller.name || 'Penjual'}" 
                                  data-seller-phone="${seller.phone || ''}" 
                                  data-seller-address="${seller.address || ''}">
                                 <!-- Info will be dynamically inserted here by JavaScript based on selected radio -->
                             </div>
 
-                            <!-- Edit Container (Hidden by default) -->
-                            <div id="address-edit-container" class="hidden pt-2">
+                            <!-- Edit Container -->
+                            <div id="address-edit-container" class="${hasSavedAddress ? 'hidden' : ''} pt-2">
                                 <form id="checkout-address-form" class="flex flex-col gap-3">
                                     <div class="form-group" style="margin: 0;">
                                         <label class="text-xs font-semibold block mb-1">Nama Penerima</label>
@@ -247,7 +248,7 @@ export async function render(params) {
 export async function afterRender(params) {
     if (window.lucide) window.lucide.createIcons();
 
-    const user = await Auth.getCurrentUser();
+    const user = (await Auth.getCurrentUser()) || {};
     const cart = Store.getCart();
     
     // Load seller information
@@ -277,16 +278,26 @@ export async function afterRender(params) {
         const method = document.querySelector('input[name="delivery_method"]:checked')?.value || 'antar';
         if (!viewContainer || !editContainer || !btnEditAddress) return;
 
-        // Reset to view mode
-        editContainer.classList.add('hidden');
-        viewContainer.classList.remove('hidden');
-
         if (method === 'antar') {
-            const name = document.getElementById('checkout-name').value.trim();
-            const phone = document.getElementById('checkout-phone').value.trim();
-            const building = document.getElementById('checkout-building').value;
-            const floor = document.getElementById('checkout-floor').value;
-            const unit = document.getElementById('checkout-unit').value.trim();
+            const name = document.getElementById('checkout-name')?.value.trim() || '';
+            const phone = document.getElementById('checkout-phone')?.value.trim() || '';
+            const building = document.getElementById('checkout-building')?.value || 'A';
+            const floor = document.getElementById('checkout-floor')?.value || '1';
+            const unit = document.getElementById('checkout-unit')?.value.trim() || '';
+
+            const hasProfileAddr = !!(viewContainer.dataset.userAddress && viewContainer.dataset.userAddress.trim());
+
+            // Jika belum punya alamat profil dan belum mengisi ruangan, biarkan form input tetap terbuka
+            if (!hasProfileAddr && !unit) {
+                editContainer.classList.remove('hidden');
+                viewContainer.classList.add('hidden');
+                btnEditAddress.style.display = 'none';
+                return;
+            }
+
+            // Reset to view mode
+            editContainer.classList.add('hidden');
+            viewContainer.classList.remove('hidden');
 
             // Default to profile address, but if edited, construct the new one
             let displayAddress = viewContainer.dataset.userAddress || '';
@@ -432,7 +443,7 @@ export async function afterRender(params) {
         });
     });
 
-    const showProofUploadModal = (onUploaded, onCancel, onSwitchCod) => {
+    const showProofUploadModal = (onUploaded, onCancel, onSwitchCod, isCodAvailable = false) => {
         let modalContainer = document.getElementById('proof-modal-container');
         if (!modalContainer) {
             modalContainer = document.createElement('div');
@@ -442,25 +453,32 @@ export async function afterRender(params) {
 
         modalContainer.innerHTML = `
             <div class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;">
-                <div class="modal-content scale-in text-left" style="background:white;border-radius:12px;width:90%;max-width:450px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;padding: 20px;">
-                    <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: var(--font-heading);">Unggah Bukti Pembayaran</h3>
-                    <p class="text-sm text-gray-600 mb-4">Silakan unggah foto struk / bukti transfer bank / QRIS Anda untuk melanjutkan.</p>
+                <div class="modal-content scale-in text-left" style="background:white;border-radius:12px;width:90%;max-width:440px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;padding: 20px;">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: var(--font-heading);">Bukti Pembayaran</h3>
+                    <p class="text-sm text-gray-600 mb-3">Silakan unggah struk pembayaran jika sudah transfer/scan QRIS. Atau, Anda dapat langsung pesan sekarang dan konfirmasi via WhatsApp.</p>
                     
                     <div style="margin-bottom: 15px;">
-                        <input type="file" id="payment-proof-file" accept="image/*" class="form-input p-2 border rounded text-sm bg-white" style="width: 100%; cursor: pointer;" required>
-                        <div id="payment-proof-preview-container" style="display: none; margin-top: 12px; text-align: center;">
-                            <img id="payment-proof-preview" style="max-width: 100%; max-height: 180px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-glass);" />
+                        <input type="file" id="payment-proof-file" accept="image/*" class="form-input p-2 border rounded text-sm bg-white" style="width: 100%; cursor: pointer;">
+                        <div id="payment-proof-preview-container" style="display: none; margin-top: 10px; text-align: center;">
+                            <img id="payment-proof-preview" style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-glass);" />
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between gap-2" style="border-top: 1px solid #f3f4f6; padding-top: 12px; display: flex; align-items: center; justify-content: space-between;">
-                        <button type="button" id="btn-switch-cod" class="text-xs text-primary font-semibold hover:underline" style="background:none; border:none; padding:0; cursor:pointer;">
-                            Ganti ke COD (Bayar di Tempat)
+                    <div class="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                        <button type="button" id="btn-submit-proof" class="btn btn-primary w-full py-2.5 font-semibold text-white" style="border-radius: 6px; opacity: 0.5; cursor: not-allowed;" disabled>
+                            Kirim dengan Bukti Bayar
                         </button>
-                        <div class="flex gap-2" style="display: flex; gap: 8px;">
-                            <button type="button" id="btn-cancel-proof" class="btn btn-secondary" style="padding: 6px 12px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Batal</button>
-                            <button type="button" id="btn-submit-proof" class="btn btn-primary" style="padding: 6px 12px; border: none; background: var(--accent-primary); color: white; border-radius: 6px; cursor: not-allowed; opacity: 0.5; font-size: 14px; font-weight: 500;" disabled>Kirim & Pesan</button>
-                        </div>
+                        <button type="button" id="btn-skip-proof" class="btn btn-outline w-full py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" style="border-radius: 6px; border: 1px solid #d1d5db;">
+                            Pesan Dulu (Kirim Bukti via WhatsApp)
+                        </button>
+                        ${isCodAvailable ? `
+                        <button type="button" id="btn-switch-cod" class="text-xs text-primary font-semibold hover:underline text-center py-1" style="background:none; border:none; cursor:pointer;">
+                            Ganti Metode ke COD (Bayar di Tempat)
+                        </button>
+                        ` : ''}
+                        <button type="button" id="btn-cancel-proof" class="text-xs text-gray-400 hover:text-gray-600 text-center py-1 mt-1" style="background:none; border:none; cursor:pointer;">
+                            Batal
+                        </button>
                     </div>
                 </div>
             </div>
@@ -473,9 +491,10 @@ export async function afterRender(params) {
         const previewImage = modalContainer.querySelector('#payment-proof-preview');
         const btnCancel = modalContainer.querySelector('#btn-cancel-proof');
         const btnSubmit = modalContainer.querySelector('#btn-submit-proof');
+        const btnSkip = modalContainer.querySelector('#btn-skip-proof');
         const btnSwitchCod = modalContainer.querySelector('#btn-switch-cod');
 
-        fileInput.addEventListener('change', (e) => {
+        fileInput?.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -483,8 +502,8 @@ export async function afterRender(params) {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
+                        const MAX_WIDTH = 600;
+                        const MAX_HEIGHT = 600;
                         let width = img.width;
                         let height = img.height;
 
@@ -505,15 +524,16 @@ export async function afterRender(params) {
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Compress to JPEG with 0.7 quality
-                        base64Proof = canvas.toDataURL('image/jpeg', 0.7);
+                        base64Proof = canvas.toDataURL('image/jpeg', 0.6);
                         previewImage.src = base64Proof;
                         previewContainer.style.display = 'block';
                         
-                        // Enable button
                         btnSubmit.disabled = false;
                         btnSubmit.style.opacity = '1';
                         btnSubmit.style.cursor = 'pointer';
+                    };
+                    img.onerror = () => {
+                        showToast('Format foto tidak didukung, silakan coba foto lain atau pilih Pesan Dulu.', 'error');
                     };
                     img.src = event.target.result;
                 };
@@ -521,8 +541,6 @@ export async function afterRender(params) {
             } else {
                 base64Proof = '';
                 previewContainer.style.display = 'none';
-                
-                // Disable button
                 btnSubmit.disabled = true;
                 btnSubmit.style.opacity = '0.5';
                 btnSubmit.style.cursor = 'not-allowed';
@@ -533,7 +551,7 @@ export async function afterRender(params) {
             modalContainer.innerHTML = '';
         };
 
-        btnCancel.addEventListener('click', () => {
+        btnCancel?.addEventListener('click', () => {
             close();
             if (onCancel) onCancel();
         });
@@ -543,7 +561,12 @@ export async function afterRender(params) {
             if (onSwitchCod) onSwitchCod();
         });
 
-        btnSubmit.addEventListener('click', () => {
+        btnSkip?.addEventListener('click', () => {
+            close();
+            if (onUploaded) onUploaded(null);
+        });
+
+        btnSubmit?.addEventListener('click', () => {
             if (!base64Proof) {
                 showToast('Harap pilih file bukti pembayaran terlebih dahulu', 'error');
                 return;
@@ -615,7 +638,7 @@ export async function afterRender(params) {
                     name: product?.name || 'Produk',
                     price: Number(product?.price) || 0,
                     qty: Number(cartItem.qty) || 1,
-                    image: product?.image || ''
+                    image: (product?.image && !product.image.startsWith('data:image')) ? product.image : ''
                 });
             }
 
@@ -628,6 +651,19 @@ export async function afterRender(params) {
             const EVOLUTION_URL = 'https://wa.cilebut-one.cloud';
             const EVOLUTION_APIKEY = '5nbns1qqqp8yevzqu4qiug';
             const EVOLUTION_INSTANCE = 'New-one';
+
+            const fetchWithTimeout = async (url, options = {}, timeoutMs = 5000) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const response = await fetch(url, { ...options, signal: controller.signal });
+                    clearTimeout(timer);
+                    return response;
+                } catch (err) {
+                    clearTimeout(timer);
+                    throw err;
+                }
+            };
 
             const formatWAPhone = (rawPhone) => {
                 let p = String(rawPhone || '').replace(/\D/g, '');
@@ -658,7 +694,7 @@ Silakan cek & proses pesanan di:
 
                     // 1. Kirim pesan teks rincian pesanan ke penjual
                     console.log('Mengirim notifikasi WA ke Penjual:', p);
-                    const resText = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    const resText = await fetchWithTimeout(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -672,7 +708,7 @@ Silakan cek & proses pesanan di:
                     // 2. Jika ada bukti pembayaran (Transfer / QRIS), kirim gambar bukti ke penjual
                     if (paymentProof) {
                         const cleanBase64 = paymentProof.includes(',') ? paymentProof.split(',')[1] : paymentProof;
-                        const resMedia = await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+                        const resMedia = await fetchWithTimeout(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -686,7 +722,7 @@ Silakan cek & proses pesanan di:
                                     media: cleanBase64
                                 }
                             })
-                        });
+                        }, 8000);
                         const dataMedia = await resMedia.json().catch(() => ({}));
                         console.log('Evolution API Response (Seller Media):', resMedia.status, dataMedia);
                     }
@@ -720,7 +756,7 @@ Pantau status pesanan Kakak di sini:
 🔗 https://umkm-kemnaker.vercel.app/#/orders`;
 
                     console.log('Mengirim notifikasi WA ke Pembeli:', p);
-                    const resBuyer = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
+                    const resBuyer = await fetchWithTimeout(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -767,6 +803,8 @@ Pantau status pesanan Kakak di sini:
                     const paymentMethodLabel = paymentLabels[activePaymentMethod] || activePaymentMethod;
 
                     let serialOffset = 0;
+                    const waPromises = [];
+
                     for (const sellerId of Object.keys(sellerItems)) {
                         const currentSerial = nextNum + serialOffset;
                         const nextNumStr = String(currentSerial).padStart(4, '0');
@@ -813,10 +851,9 @@ Pantau status pesanan Kakak di sini:
 
                         // 1. Kirim notifikasi WA ke penjual
                         const buyerPhone = user.phone || document.getElementById('checkout-phone')?.value;
-                        const promises = [];
 
                         if (sellerPhone) {
-                            promises.push(sendWANotification(
+                            waPromises.push(sendWANotification(
                                 sellerPhone,
                                 sellerName,
                                 customOrderId,
@@ -831,7 +868,7 @@ Pantau status pesanan Kakak di sini:
 
                         // 2. Kirim notifikasi WA ke pembeli
                         if (buyerPhone) {
-                            promises.push(sendBuyerWANotification(
+                            waPromises.push(sendBuyerWANotification(
                                 buyerPhone,
                                 user.name || 'Pembeli',
                                 sellerName,
@@ -842,16 +879,17 @@ Pantau status pesanan Kakak di sini:
                                 paymentMethodLabel
                             ));
                         }
-
-                        // Tunggu semua notifikasi WA terkirim sebelum pindah halaman
-                        if (promises.length > 0) {
-                            await Promise.allSettled(promises);
-                        }
                     }
 
+                    // Selesaikan pesanan langsung di UI agar pembeli tidak tertahan/stuck
                     Store.clearCart();
                     showToast('Pesanan berhasil dibuat!', 'success');
                     Router.navigate('/orders');
+
+                    // Kirim notifikasi WA di background dengan aman
+                    if (waPromises.length > 0) {
+                        Promise.allSettled(waPromises).catch(err => console.warn('Background WA dispatch error:', err));
+                    }
                 } catch(e) {
                     console.error("Kesalahan saat checkout:", e);
                     showToast('Gagal memproses pesanan: ' + e.message, 'error');
@@ -872,7 +910,8 @@ Pantau status pesanan Kakak di sini:
                     () => {
                         // Switch to COD callback
                         executeCreateOrders(null, 'cod');
-                    }
+                    },
+                    showCod
                 );
             } else {
                 // COD - proceed immediately
