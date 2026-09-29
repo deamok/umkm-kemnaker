@@ -650,8 +650,8 @@ export async function afterRender(params) {
 
             // Kirim notifikasi WhatsApp ke penjual & pembeli via Evolution API
             const EVOLUTION_URL = 'https://wa.cilebut-one.cloud';
-            const EVOLUTION_APIKEY = '5nbns1qqqp8yevzqu4qiug';
-            const EVOLUTION_INSTANCE = 'New-one';
+            const EVOLUTION_APIKEY = 'cilebut-ONE.server:2026';
+            const EVOLUTION_INSTANCE = 'umkm-kemnaker';
 
             const fetchWithTimeout = async (url, options = {}, timeoutMs = 5000) => {
                 const controller = new AbortController();

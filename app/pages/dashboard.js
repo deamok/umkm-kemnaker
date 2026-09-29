@@ -982,11 +982,11 @@ export async function afterRender(params) {
                             }
                             
                             if (text) {
-                                const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/New-one`, {
+                                const res = await fetch(`https://wa.cilebut-one.cloud/message/sendText/umkm-kemnaker`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'apikey': '5nbns1qqqp8yevzqu4qiug'
+                                        'apikey': 'cilebut-ONE.server:2026'
                                     },
                                     body: JSON.stringify({ number: phone, textMessage: { text: text } })
                                 });
