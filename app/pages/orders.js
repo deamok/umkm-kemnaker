@@ -95,6 +95,15 @@ export async function render(params) {
                                             data-sellerid="${order.sellerId}" data-sellername="${escapeHtml(sellerName)}" data-buyerid="${order.buyerId}">
                                         <i data-lucide="message-square" class="w-4 h-4 inline"></i> Chat Penjual
                                     </button>
+                                    ${(() => {
+                                        const rawPhone = seller?.phone || sellerLapak?.phone || '';
+                                        if (!rawPhone) return '';
+                                        let p = String(rawPhone).replace(/\D/g, '');
+                                        if (p.startsWith('0')) p = '62' + p.slice(1);
+                                        if (!p.startsWith('62')) p = '62' + p;
+                                        const text = encodeURIComponent('Halo Kak ' + sellerName + ', saya ingin konfirmasi pesanan #' + order.id + ' di UMKM Kemnaker.');
+                                        return `<a href="https://wa.me/${p}?text=${text}" target="_blank" class="btn btn-sm text-sm px-3 py-1.5 flex items-center gap-1" style="background:#25D366; color:white; border:none; text-decoration:none;"><i data-lucide="phone" class="w-4 h-4 inline"></i> WA Penjual</a>`;
+                                    })()}
                                 </div>
                             </div>
                         </div>
