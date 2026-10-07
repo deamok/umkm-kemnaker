@@ -28,29 +28,34 @@ export async function render(params) {
     if (product.category === 'kerajinan') bgGradient = 'linear-gradient(135deg, #6c5ce7, #a29bfe)';
 
     return `
-        <div style="overflow-x: hidden; width: 100%;">
-            <div class="product-detail container py-10 fade-in">
-                <div class="grid grid-2" style="gap: 3rem; align-items: start;">
-                    <!-- Image Side -->
-                    <div class="product-detail-image-container bg-white border border-gray-200 p-8 flex items-center justify-center rounded-xl" style="position: relative; overflow: hidden;">
+        <div class="product-detail-page" style="overflow-x: hidden; width: 100%;">
+            <div class="product-detail-wrapper fade-in">
+                <!-- Image Side -->
+                <div class="product-detail-image-box">
+                    <div class="product-detail-image-container" style="position: relative; overflow: hidden;">
+                        <button class="product-detail-back-btn" onclick="window.history.back()" title="Kembali">
+                            <i data-lucide="arrow-left"></i>
+                        </button>
                         ${product.status === 'po' ? `
-                            <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10;">
-                                <div class="bg-orange-500 text-white font-bold text-center py-2 shadow-md" style="position: absolute; top: 32px; right: -35px; width: 170px; transform: rotate(45deg);">PRE-ORDER</div>
+                            <div class="product-detail-ribbon-wrapper">
+                                <div class="ribbon-badge ribbon-po text-center py-2 shadow-md" style="background-color: #facc15; color: #111827; font-weight: 800;">PRE-ORDER</div>
                             </div>
                         ` : `
-                            <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10;">
-                                <div class="bg-green-500 text-white font-bold text-center py-2 shadow-md" style="position: absolute; top: 32px; right: -35px; width: 170px; transform: rotate(45deg);">READY</div>
+                            <div class="product-detail-ribbon-wrapper">
+                                <div class="bg-green-500 text-white font-bold text-center py-2 shadow-md ribbon-badge">READY</div>
                             </div>
                         `}
                         ${product.image && product.image.startsWith('data:image') ? 
-                            `<img src="${product.image}" alt="${escapeHtml(product.name)}" class="object-contain" style="max-width: 100%; max-height: 100%; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));">` :
-                            `<div class="product-image-placeholder flex flex-center justify-center w-full h-full rounded-lg" style="background: ${bgGradient}" >
+                            `<img src="${product.image}" alt="${escapeHtml(product.name)}" class="product-detail-img">` :
+                            `<div class="product-image-placeholder flex flex-center justify-center w-full h-full" style="background: transparent;">
                                 <span class="product-emoji text-9xl">${product.image || getCategoryEmoji(product.category)}</span>
                             </div>`
                         }
                     </div>
+                </div>
 
-                    <!-- Info Side -->
+                <!-- Info Side -->
+                <div class="product-detail-info-box">
                     <div class="product-detail-info flex flex-col justify-start">
                         <h1 class="product-detail-name text-4xl font-semibold text-gray-800 mb-2">${escapeHtml(product.name)}</h1>
                         
@@ -312,7 +317,7 @@ export async function afterRender(params) {
                 // Render products
                 const html = otherProducts.map(p => `
                     <div class="flex-none rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onclick="window.location.hash = '/product/${p.id}'" style="scroll-snap-align: start; width: 150px; min-width: 150px; border: 1.5px solid #e5e7eb; position: relative; background: rgba(0,0,0,0.05);">
-                        <div style="position: absolute; top: 6px; left: 6px; z-index: 5; background: ${p.status === 'po' ? '#f97316' : '#22c55e'}; color: white; font-weight: 700; font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 4px; letter-spacing: 0.5px;">
+                        <div style="position: absolute; top: 6px; left: 6px; z-index: 5; background: ${p.status === 'po' ? '#facc15' : '#22c55e'}; color: ${p.status === 'po' ? '#111827' : 'white'}; font-weight: 800; font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 4px; letter-spacing: 0.5px;">
                             ${p.status === 'po' ? 'PO' : 'R'}
                         </div>
                         <div style="width: 100%; aspect-ratio: 1 / 1; background: #f9fafb; display: flex; align-items: center; justify-content: center; overflow: hidden;">

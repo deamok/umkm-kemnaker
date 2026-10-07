@@ -19,7 +19,7 @@ export function renderProductCard(product, seller) {
     : `<span class="product-emoji">${emoji}</span>`;
 
   const statusBadge = product.status === 'po' 
-    ? `<span class="card-badge" style="background-color: var(--warning); color: white; right: 10px; top: 10px;">PRE-ORDER</span>` 
+    ? `<span class="card-badge" style="background-color: #facc15; color: #111827; font-weight: 800; right: 10px; top: 10px;">PRE-ORDER</span>` 
     : '';
 
   return `
