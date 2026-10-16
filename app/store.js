@@ -137,6 +137,11 @@ const Store = {
     await updateDoc(docRef, { status });
     return true;
   },
+  async updateOrder(id, updates) {
+    const docRef = doc(db, this.KEYS.ORDERS, id);
+    await updateDoc(docRef, updates);
+    return true;
+  },
   async getOrder(id) {
     const docRef = doc(db, this.KEYS.ORDERS, id);
     const docSnap = await getDoc(docRef);

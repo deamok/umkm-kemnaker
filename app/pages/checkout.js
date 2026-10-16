@@ -673,25 +673,38 @@ export async function afterRender(params) {
                 return p;
             };
 
-            const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel, paymentProof = null) => {
+            const sendWANotification = async (sellerPhone, sellerName, orderId, items, totalPrice, buyerName, deliveryInfo, paymentMethodLabel, paymentProof = null, isTerasMOWI = false, buyerPhone = '') => {
                 try {
                     const p = formatWAPhone(sellerPhone);
-                    const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${Number(it.price).toLocaleString('id-ID')}`).join('\n');
-                    const message = 
+                    
+                    let message = '';
+                    if (isTerasMOWI) {
+                        message = 
+`🔔 *PERMINTAAN QRIS NOMINAL (TerasMOWI)*
+━━━━━━━━━━━━━━━━━━━━
+📋 *No. Pesanan:* ${orderId}
+💰 *Total Bayar: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
+━━━━━━━━━━━━━━━━━━━━
+Silakan buat QRIS dengan nominal di atas, lalu kirimkan gambarnya melalui tautan berikut:
+👉 https://umkm-kemnaker.vercel.app/#/kirim-qris?orderId=${orderId}`;
+                    } else {
+                        const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${Number(it.price).toLocaleString('id-ID')}`).join('\n');
+                        message = 
 `🛒 *PESANAN BARU MASUK!*
 ━━━━━━━━━━━━━━━━━━━━
 📋 *No. Pesanan:* ${orderId}
-👤 *Pembeli:* ${buyerName}
+👤 *Pembeli:* ${buyerName} ${buyerPhone ? `(${buyerPhone})` : ''}
 📦 *Pengiriman:* ${deliveryInfo}
 💳 *Pembayaran:* ${paymentMethodLabel}
 
 🧾 *Detail Pesanan:*
 ${itemList}
 
-💰 *Total: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
+💰 *TOTAL BAYAR: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
 ━━━━━━━━━━━━━━━━━━━━
 Silakan cek & proses pesanan di:
 🔗 https://umkm-kemnaker.vercel.app/#/dashboard`;
+                    }
 
                     // 1. Kirim pesan teks rincian pesanan ke penjual
                     console.log('Mengirim notifikasi WA ke Penjual:', p);
@@ -723,7 +736,7 @@ Silakan cek & proses pesanan di:
                                     media: cleanBase64
                                 }
                             })
-                        }, 8000);
+                        }, 15000);
                         const dataMedia = await resMedia.json().catch(() => ({}));
                         console.log('Evolution API Response (Seller Media):', resMedia.status, dataMedia);
                     }
@@ -732,14 +745,26 @@ Silakan cek & proses pesanan di:
                 }
             };
 
-            const sendBuyerWANotification = async (buyerPhone, buyerName, sellerName, orderId, items, totalPrice, deliveryInfo, paymentMethodLabel) => {
+            const sendBuyerWANotification = async (buyerPhone, buyerName, sellerName, orderId, items, totalPrice, deliveryInfo, paymentMethodLabel, sellerQris = null, isTerasMOWI = false) => {
                 try {
                     const p = formatWAPhone(buyerPhone);
                     const itemList = items.map((it, i) => `  ${i+1}. ${it.name} (${it.qty}x) — Rp ${Number(it.price).toLocaleString('id-ID')}`).join('\n');
+                    
+                    let noteText = '';
+                    if (isTerasMOWI) {
+                        noteText = 
+`Pesanan Kakak telah kami terima dan sedang disiapkan. 
+
+Penjual saat ini sedang membuatkan kode QRIS dengan nominal tagihan pas (*Rp ${Number(totalPrice).toLocaleString('id-ID')}*). Kode QRIS akan segera dikirimkan ke WhatsApp Kakak sebentar lagi. Mohon ditunggu ya Kak! 🙏`;
+                    } else {
+                        noteText = 
+`Pesanan Kakak telah kami teruskan ke pihak penjual. Mohon kesediaannya untuk menunggu respon dan konfirmasi pesanan dari penjual ya Kak.`;
+                    }
+
                     const message = 
 `Halo Kak *${buyerName}*,
 
-Terima kasih banyak sudah jajan di *UMKM Pegawai Kemnaker*! 🙏
+Terima kasih banyak sudah jajan di *${isTerasMOWI ? 'TerasMOWI' : 'UMKM Pegawai Kemnaker'}*! 🙏
 
 📋 *No. Pesanan:* ${orderId}
 🏪 *Warung/Penjual:* ${sellerName}
@@ -751,7 +776,7 @@ ${itemList}
 
 💰 *Total: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
 ━━━━━━━━━━━━━━━━━━━━
-Pesanan Kakak telah kami teruskan ke pihak penjual. Mohon kesediaannya untuk menunggu respon dan konfirmasi pesanan dari penjual ya Kak.
+${noteText}
 
 Pantau status pesanan Kakak di sini:
 🔗 https://umkm-kemnaker.vercel.app/#/orders`;
@@ -767,6 +792,54 @@ Pantau status pesanan Kakak di sini:
                     });
                     const dataBuyer = await resBuyer.json().catch(() => ({}));
                     console.log('Evolution API Response (Buyer Text):', resBuyer.status, dataBuyer);
+
+                    // Kirim gambar QRIS ke pembeli jika tersedia (khusus warung TerasMOWI atau metode QRIS)
+                    if (sellerQris) {
+                        let cleanBase64 = null;
+                        if (sellerQris.includes('base64,')) {
+                            cleanBase64 = sellerQris.split('base64,')[1];
+                        } else if (sellerQris.startsWith('data:image')) {
+                            cleanBase64 = sellerQris.split(',')[1];
+                        } else if (sellerQris.startsWith('/') || sellerQris.startsWith('img/')) {
+                            try {
+                                const resp = await fetch(sellerQris);
+                                const blob = await resp.blob();
+                                cleanBase64 = await new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        const r = reader.result;
+                                        resolve(r.includes('base64,') ? r.split('base64,')[1] : r);
+                                    };
+                                    reader.readAsDataURL(blob);
+                                });
+                            } catch (e) {
+                                console.warn('Gagal membaca QRIS fallback:', e);
+                            }
+                        } else {
+                            cleanBase64 = sellerQris;
+                        }
+
+                        if (cleanBase64) {
+                            console.log('Mengirim gambar QRIS ke Pembeli:', p);
+                            const resQris = await fetchWithTimeout(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'apikey': EVOLUTION_APIKEY
+                                },
+                                body: JSON.stringify({
+                                    number: p,
+                                    mediaMessage: {
+                                        mediatype: 'image',
+                                        caption: `📱 *QRIS Pembayaran - ${sellerName}*\nTotal: *Rp ${Number(totalPrice).toLocaleString('id-ID')}*\n\nSilakan scan atau simpan kode QRIS di atas untuk menyelesaikan pembayaran ya Kak. 🙏`,
+                                        media: cleanBase64
+                                    }
+                                })
+                            }, 15000);
+                            const dataQris = await resQris.json().catch(() => ({}));
+                            console.log('Evolution API Response (Buyer QRIS Media):', resQris.status, dataQris);
+                        }
+                    }
                 } catch (err) {
                     console.error('WA buyer notification gagal:', err);
                 }
@@ -840,26 +913,43 @@ Pantau status pesanan Kakak di sini:
                         // Ambil data penjual & lapak
                         let sellerPhone = null;
                         let sellerName = 'Penjual';
+                        let sellerQris = null;
 
                         const sellerData = await Store.getUser(sellerId);
+                        const lapakData = await Store.getLapak(sellerId);
+
                         if (sellerData?.phone) {
                             sellerPhone = sellerData.phone;
-                            sellerName = sellerData.name || sellerName;
-                        } else {
-                            const lapakData = await Store.getLapak(sellerId);
-                            if (lapakData?.phone) {
-                                sellerPhone = lapakData.phone;
-                                sellerName = lapakData.name || sellerName;
-                            }
+                        } else if (lapakData?.phone) {
+                            sellerPhone = lapakData.phone;
                         }
+
+                        sellerName = lapakData?.name || sellerData?.warungName || sellerData?.name || sellerName;
+                        sellerQris = lapakData?.qrisImage || null;
 
                         // 1. Kirim notifikasi WA ke penjual
                         const buyerPhone = phone || user.phone || document.getElementById('checkout-phone')?.value;
                         const buyerName = name || user.name || 'Pembeli';
 
-                        if (sellerPhone) {
+                        // Khusus warung TerasMOWI:
+                        const isTerasMOWI = sellerId === 'usr-msq0umzjm600mgebd' ||
+                                            (sellerName && sellerName.toLowerCase().includes('terasmowi')) ||
+                                            (sellerData?.warungName && sellerData.warungName.toLowerCase().includes('terasmowi'));
+
+                        // Kumpulkan nomor penerima notifikasi penjual (fase checkout awal)
+                        const sellerPhones = [];
+                        if (isTerasMOWI) {
+                            // Khusus TerasMOWI saat checkout baru masuk, notif dikirim ke 2 nomor pengelola:
+                            sellerPhones.push('6285781335527', '6281289004462');
+                        } else {
+                            if (sellerPhone) {
+                                sellerPhones.push(sellerPhone);
+                            }
+                        }
+
+                        sellerPhones.forEach(phoneTarget => {
                             waPromises.push(sendWANotification(
-                                sellerPhone,
+                                phoneTarget,
                                 sellerName,
                                 customOrderId,
                                 items,
@@ -867,12 +957,16 @@ Pantau status pesanan Kakak di sini:
                                 buyerName,
                                 fullAddress,
                                 paymentMethodLabel,
-                                paymentProof
+                                paymentProof,
+                                isTerasMOWI,
+                                buyerPhone
                             ));
-                        }
+                        });
 
-                        // 2. Kirim notifikasi WA ke pembeli
-                        if (buyerPhone) {
+                        // 2. Kirim notifikasi WA ke pembeli (hanya untuk warung selain TerasMOWI)
+                        // Untuk warung TerasMOWI, pembeli tidak dikirimi WA pada fase 1 ini (baru dikirimi di fase 2 bersama gambar QRIS nominal)
+                        if (buyerPhone && !isTerasMOWI) {
+                            const qrisToSend = activePaymentMethod === 'qris' ? sellerQris : null;
                             waPromises.push(sendBuyerWANotification(
                                 buyerPhone,
                                 buyerName,
@@ -881,7 +975,9 @@ Pantau status pesanan Kakak di sini:
                                 items,
                                 totalPrice,
                                 fullAddress,
-                                paymentMethodLabel
+                                paymentMethodLabel,
+                                qrisToSend,
+                                false
                             ));
                         }
                     }

@@ -18,6 +18,7 @@ import * as OrdersPage from './pages/orders.js';
 import * as ProfilePage from './pages/profile.js';
 import * as ChatsPage from './pages/chats.js';
 import * as ChatRoomPage from './pages/chatRoom.js';
+import * as UploadQrisPage from './pages/uploadQris.js';
 
 // Initialize Store and Global Components
 Store.init();
@@ -61,6 +62,7 @@ const routes = {
   '/profile': createRoute(ProfilePage),
   '/chats': createRoute(ChatsPage),
   '/chat/:id': createRoute(ChatRoomPage),
+  '/kirim-qris': createRoute(UploadQrisPage),
 };
 
 // Start router
