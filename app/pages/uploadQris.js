@@ -305,7 +305,7 @@ export async function afterRender(params) {
                 }
             };
 
-            const waTasks = [];
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
             // A. Kirim ke WhatsApp Pembeli
             if (buyerPhone) {
@@ -323,7 +323,8 @@ Setelah pembayaran berhasil, pesanan Kakak akan segera disiapkan dan diantar. Te
 Pantau pesanan Kakak di sini:
 🔗 https://umkm-kemnaker.vercel.app/#/orders`;
 
-                waTasks.push(sendMediaWithTimeout(buyerPhone, buyerCaption));
+                await sendMediaWithTimeout(buyerPhone, buyerCaption);
+                await sleep(1500);
             }
 
             // B. Kirim ke 3 Nomor Tim TerasMOWI
@@ -337,11 +338,10 @@ Pantau pesanan Kakak di sini:
 
 Kode QRIS nominal telah berhasil dikirimkan ke WhatsApp pembeli. Mohon pantau mutasi m-banking dan siapkan pesanannya! 👍`;
 
-            terasMOWIPhones.forEach(phone => {
-                waTasks.push(sendMediaWithTimeout(phone, teamCaption));
-            });
-
-            await Promise.allSettled(waTasks);
+            for (const phone of terasMOWIPhones) {
+                await sendMediaWithTimeout(phone, teamCaption);
+                await sleep(1500);
+            }
 
             showToast('QRIS nominal berhasil dikirim ke Pembeli & Tim!', 'success');
             btnSubmit.innerHTML = `✅ Berhasil Terkirim!`;
