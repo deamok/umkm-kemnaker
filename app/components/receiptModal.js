@@ -3,7 +3,7 @@ import Auth from '../auth.js';
 import { formatRupiah, formatIndonesianDate, parseFlexibleDate, showToast, escapeHtml } from '../utils.js';
 
 /**
- * Menampilkan Modal Nota / Struk Pembelian
+ * Menampilkan Modal Nota / Struk Pembelian Sesuai Template Resmi
  * @param {string|object} orderOrId - ID pesanan atau objek pesanan
  */
 export async function showReceiptModal(orderOrId) {
@@ -29,17 +29,23 @@ export async function showReceiptModal(orderOrId) {
         buyerId ? Store.getUser(buyerId).catch(() => null) : null
     ]);
 
-    const sellerName = sellerLapak?.name || seller?.warungName || seller?.name || 'Warung Digital UMKM';
+    const sellerName = sellerLapak?.name || seller?.warungName || seller?.name || 'TerasMOWI';
     const sellerPhone = sellerLapak?.phone || seller?.phone || '';
-    const sellerLocation = [
+    
+    // Susun alamat penjual
+    const sellerLocationParts = [
+        sellerLapak?.bagian || seller?.bagian,
         sellerLapak?.gedung || seller?.gedung,
         sellerLapak?.lantai ? `Lantai ${sellerLapak.lantai}` : (seller?.lantai ? `Lantai ${seller.lantai}` : ''),
-        sellerLapak?.ruangan || seller?.ruangan || sellerLapak?.bagian || seller?.bagian
-    ].filter(Boolean).join(', ');
+        sellerLapak?.ruangan || seller?.ruangan
+    ].filter(Boolean);
+    const sellerLocation = sellerLocationParts.length > 0 
+        ? sellerLocationParts.join(' ') 
+        : (sellerLapak?.address || seller?.address || '');
 
-    const buyerName = buyer?.name || 'Pembeli';
+    const buyerName = buyer?.name || 'Pelanggan';
     const buyerPhone = buyer?.phone || '';
-    const buyerAddress = order.address || buyer?.address || '-';
+    const buyerAddress = order.address || buyer?.address || '';
 
     // Format tanggal & waktu
     let orderDateObj = null;
@@ -64,25 +70,21 @@ export async function showReceiptModal(orderOrId) {
     });
 
     // Format Status
-    const statusMap = {
-        'pending': { text: 'Menunggu', color: '#f59e0b', bg: '#fef3c7' },
-        'processing': { text: 'Diproses', color: '#3b82f6', bg: '#dbeafe' },
-        'shipped': { text: 'Dikirim', color: '#8b5cf6', bg: '#ede9fe' },
-        'completed': { text: 'Selesai', color: '#10b981', bg: '#d1fae5' },
-        'cancelled': { text: 'Dibatalkan', color: '#ef4444', bg: '#fee2e2' }
+    const statusTextMap = {
+        'pending': 'Menunggu',
+        'processing': 'Diproses',
+        'shipped': 'Dikirim',
+        'completed': 'Selesai',
+        'cancelled': 'Dibatalkan'
     };
-    const statusInfo = statusMap[order.status] || { text: order.status || 'Pesanan', color: '#6b7280', bg: '#f3f4f6' };
+    const statusText = statusTextMap[order.status] || order.status || 'Selesai';
 
     // Format Metode Pembayaran
     const paymentLabel = {
         'transfer': 'Transfer Bank',
         'qris': 'QRIS',
         'cod': 'COD (Bayar di Tempat)'
-    }[order.paymentMethod] || order.paymentMethod || 'Tunai';
-
-    // Info Estimasi Pengiriman jika ada
-    const savedDeliveryDate = order.estimatedDelivery ? formatIndonesianDate(order.estimatedDelivery, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
-    const deliverySchedule = savedDeliveryDate ? `${savedDeliveryDate} ${order.deliveryTime ? `(${order.deliveryTime})` : ''}` : '';
+    }[order.paymentMethod] || order.paymentMethod || 'QRIS';
 
     // Siapkan teks nota untuk WhatsApp / Clipboard
     const waItemsList = (order.items || []).map((it, idx) => {
@@ -90,24 +92,28 @@ export async function showReceiptModal(orderOrId) {
         return `${idx + 1}. ${it.name} (${it.qty}x) = ${formatRupiah(itemSubtotal)}`;
     }).join('\n');
 
-    const rawWaText = `*NOTA PEMBELIAN - UMKM KEMNAKER*
+    const rawWaText = `*BUKTI TRANSAKSI PEMBELIAN*
+*Lapak UMKM Pegawai Kemnaker*
 ----------------------------------------
-No. Nota: *#${order.id}*
-Tanggal: ${formattedDate} (${formattedTime} WIB)
-Toko: *${sellerName}*
+Nama Warung: *${sellerName}*
+${sellerLocation ? `Alamat: ${sellerLocation}\n` : ''}${sellerPhone ? `No. Telp: ${sellerPhone}\n` : ''}----------------------------------------
+No. Pesanan / Nota : *#${order.id}*
+Tanggal : ${formattedDate} (${formattedTime} WIB)
+Status Pesanan : *${statusText}*
+Metode Bayar : *${paymentLabel}*
 ----------------------------------------
-*Data Pemesan:*
-Nama: ${buyerName}
-Alamat/Lokasi: ${buyerAddress}
-----------------------------------------
+*Pelanggan:*
+${buyerName}
+${buyerAddress ? `${buyerAddress}\n` : ''}${buyerPhone ? `${buyerPhone}\n` : ''}----------------------------------------
 *Rincian Belanja:*
 ${waItemsList}
-
-*Total Belanja:* *${formatRupiah(order.totalPrice || 0)}*
-Metode Bayar: ${paymentLabel}
-Status: *${statusInfo.text.toUpperCase()}*
-${deliverySchedule ? `Jadwal Tiba: ${deliverySchedule}\n` : ''}----------------------------------------
-_Terima kasih telah berbelanja di UMKM Kemnaker!_`;
+----------------------------------------
+Subtotal Belanja : ${formatRupiah(order.totalPrice || 0)}
+Ongkos Kirim (Internal Kemnaker) : GRATIS
+*Total Pembayaran : ${formatRupiah(order.totalPrice || 0)}*
+----------------------------------------
+_Terima kasih atas pesanan Anda!_
+_Lapak UMKM Pegawai Kemnaker • Jajan Tanpa Mikir Ongkir_`;
 
     // Pastikan container ada di DOM
     let container = document.getElementById('receipt-modal-container');
@@ -119,23 +125,23 @@ _Terima kasih telah berbelanja di UMKM Kemnaker!_`;
 
     container.innerHTML = `
         <div id="receipt-modal-overlay" class="receipt-overlay" style="position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px;overflow-y:auto;">
-            <div class="receipt-modal-card" style="background:#ffffff;border-radius:16px;width:100%;max-width:540px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;max-height:92vh;animation:modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div class="receipt-modal-card" style="background:#ffffff;border-radius:12px;width:100%;max-width:680px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;max-height:94vh;animation:modalScale 0.2s ease-out;">
                 
                 <!-- Action Bar (Sticky Top) - NO PRINT -->
-                <div class="receipt-action-bar no-print" style="padding:12px 18px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                <div class="receipt-action-bar no-print" style="padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span style="font-weight:700;font-size:0.95rem;color:#1e293b;display:flex;align-items:center;gap:6px;">
-                            <i data-lucide="receipt" style="width:18px;height:18px;color:#2563eb;"></i> Nota Transaksi
+                            <i data-lucide="receipt" style="width:18px;height:18px;color:#2563eb;"></i> Bukti Transaksi
                         </span>
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
-                        <button id="btn-print-receipt" class="btn btn-sm btn-primary" style="padding:6px 12px;font-size:0.85rem;background:#2563eb;color:#ffffff;border:none;border-radius:8px;display:flex;align-items:center;gap:5px;cursor:pointer;">
+                        <button id="btn-print-receipt" class="btn btn-sm btn-primary" style="padding:6px 14px;font-size:0.85rem;background:#2563eb;color:#ffffff;border:none;border-radius:6px;display:flex;align-items:center;gap:6px;cursor:pointer;">
                             <i data-lucide="printer" style="width:15px;height:15px;"></i> Cetak / PDF
                         </button>
-                        <button id="btn-share-receipt" class="btn btn-sm" style="padding:6px 12px;font-size:0.85rem;background:#22c55e;color:#ffffff;border:none;border-radius:8px;display:flex;align-items:center;gap:5px;cursor:pointer;">
+                        <button id="btn-share-receipt" class="btn btn-sm" style="padding:6px 14px;font-size:0.85rem;background:#22c55e;color:#ffffff;border:none;border-radius:6px;display:flex;align-items:center;gap:6px;cursor:pointer;">
                             <i data-lucide="share-2" style="width:15px;height:15px;"></i> WA
                         </button>
-                        <button id="btn-copy-receipt" class="btn btn-sm btn-outline" style="padding:6px 10px;font-size:0.85rem;border:1px solid #cbd5e1;background:#ffffff;color:#475569;border-radius:8px;cursor:pointer;" title="Salin Teks Nota">
+                        <button id="btn-copy-receipt" class="btn btn-sm btn-outline" style="padding:6px 10px;font-size:0.85rem;border:1px solid #cbd5e1;background:#ffffff;color:#475569;border-radius:6px;cursor:pointer;" title="Salin Teks Nota">
                             <i data-lucide="copy" style="width:15px;height:15px;"></i>
                         </button>
                         <button id="btn-close-receipt" class="btn-icon" style="background:transparent;border:none;color:#64748b;padding:6px;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;" title="Tutup">
@@ -144,122 +150,127 @@ _Terima kasih telah berbelanja di UMKM Kemnaker!_`;
                     </div>
                 </div>
 
-                <!-- Printable Area -->
-                <div id="receipt-printable-area" style="padding:24px 28px;overflow-y:auto;color:#1e293b;background:#ffffff;font-family:'Inter',system-ui,-apple-system,sans-serif;">
+                <!-- Printable Area: Exactly Matching the Requested Invoice Layout -->
+                <div id="receipt-printable-area" style="padding:40px 48px;overflow-y:auto;color:#1e293b;background:#ffffff;font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.5;">
                     
-                    <!-- Header Nota -->
-                    <div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:16px;margin-bottom:16px;">
-                        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;">
-                            <img src="img/umkm.png" alt="UMKM Kemnaker" style="max-height:36px;width:auto;mix-blend-mode:multiply;" onerror="this.style.display='none'">
+                    <!-- Header: Logo & Title Centered -->
+                    <div style="text-align:center;margin-bottom:28px;">
+                        <div style="display:flex;justify-content:center;margin-bottom:12px;">
+                            <img src="img/umkm.png" alt="UMKM Kemnaker" style="max-height:48px;width:auto;mix-blend-mode:multiply;" onerror="this.style.display='none'">
                         </div>
-                        <h2 style="margin:4px 0 2px 0;font-size:1.25rem;font-weight:800;letter-spacing:-0.02em;color:#0f172a;">${escapeHtml(sellerName)}</h2>
-                        ${sellerLocation ? `<div style="font-size:0.8rem;color:#64748b;margin-bottom:2px;">📍 ${escapeHtml(sellerLocation)}</div>` : ''}
-                        ${sellerPhone ? `<div style="font-size:0.8rem;color:#64748b;">📞 WA: ${escapeHtml(sellerPhone)}</div>` : ''}
-                        <div style="margin-top:8px;display:inline-block;padding:2px 10px;background:#f1f5f9;border-radius:999px;font-size:0.75rem;font-weight:700;letter-spacing:0.05em;color:#475569;text-transform:uppercase;">
-                            BUKTI TRANSAKSI PEMBELIAN
-                        </div>
+                        <h1 style="font-size:1.15rem;font-weight:800;letter-spacing:0.04em;color:#1e293b;margin:0;text-transform:uppercase;">BUKTI TRANSAKSI PEMBELIAN</h1>
                     </div>
 
-                    <!-- Meta Info Grid -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.825rem;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f1f5f9;">
-                        <div>
-                            <div style="color:#64748b;font-size:0.75rem;margin-bottom:2px;">NO. PESANAN / NOTA</div>
-                            <div style="font-weight:700;color:#2563eb;font-family:monospace;font-size:0.9rem;">#${order.id}</div>
-                            
-                            <div style="color:#64748b;font-size:0.75rem;margin-top:8px;margin-bottom:2px;">TANGGAL & WAKTU</div>
-                            <div style="font-weight:600;color:#334155;">${formattedDate}</div>
-                            <div style="font-size:0.75rem;color:#64748b;">${formattedTime} WIB</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="color:#64748b;font-size:0.75rem;margin-bottom:2px;">STATUS PESANAN</div>
+                    <!-- Top Section: Warung & Pelanggan (Left) + Meta Box (Right) -->
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:28px;flex-wrap:wrap;">
+                        
+                        <!-- Left Side: Nama Warung, Alamat, No Telp & Pelanggan -->
+                        <div style="flex:1;min-width:240px;font-size:0.875rem;color:#334155;">
                             <div>
-                                <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:700;color:${statusInfo.color};background:${statusInfo.bg};text-transform:capitalize;">
-                                    ${statusInfo.text}
-                                </span>
+                                <span style="color:#475569;">Nama Warung:</span> <strong>${escapeHtml(sellerName)}</strong>
                             </div>
+                            ${sellerLocation ? `
+                                <div style="margin-top:2px;">
+                                    <span style="color:#475569;">Alamat:</span> ${escapeHtml(sellerLocation)}
+                                </div>
+                            ` : ''}
+                            ${sellerPhone ? `
+                                <div style="margin-top:2px;">
+                                    <span style="color:#475569;">No. Telp:</span> ${escapeHtml(sellerPhone)}
+                                </div>
+                            ` : ''}
 
-                            <div style="color:#64748b;font-size:0.75rem;margin-top:8px;margin-bottom:2px;">METODE BAYAR</div>
-                            <div style="font-weight:600;color:#334155;">${paymentLabel}</div>
+                            <!-- Pelanggan Block -->
+                            <div style="margin-top:20px;">
+                                <div style="color:#475569;margin-bottom:2px;">Pelanggan:</div>
+                                <div style="font-weight:700;color:#0f172a;font-size:0.95rem;">${escapeHtml(buyerName)}</div>
+                                ${buyerAddress ? `<div style="color:#334155;margin-top:1px;">${escapeHtml(buyerAddress)}</div>` : ''}
+                                ${buyerPhone ? `<div style="color:#334155;margin-top:1px;">${escapeHtml(buyerPhone)}</div>` : ''}
+                            </div>
                         </div>
+
+                        <!-- Right Side: Bordered Meta Box -->
+                        <div style="border:1px solid #1e293b;padding:12px 16px;min-width:260px;font-size:0.875rem;color:#1e293b;background:#ffffff;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                <span>No. Pesanan / Nota</span>
+                                <span>: <strong>#${order.id}</strong></span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                <span>Tanggal</span>
+                                <span>: ${formattedDate}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                <span>Status Pesanan</span>
+                                <span>: ${statusText}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;">
+                                <span>Metode Bayar</span>
+                                <span>: ${paymentLabel}</span>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <!-- Data Pembeli & Tujuan -->
-                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:0.825rem;">
-                        <div style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">
-                            Tujuan Pengantaran / Pembeli:
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-                            <div>
-                                <div style="font-weight:700;color:#0f172a;font-size:0.875rem;">${escapeHtml(buyerName)}</div>
-                                <div style="color:#475569;margin-top:2px;">📍 ${escapeHtml(buyerAddress)}</div>
-                            </div>
-                            ${buyerPhone ? `<div style="color:#64748b;white-space:nowrap;font-size:0.78rem;">📞 ${escapeHtml(buyerPhone)}</div>` : ''}
-                        </div>
-                        ${deliverySchedule ? `
-                            <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1;display:flex;align-items:center;gap:6px;color:#15803d;font-weight:600;font-size:0.8rem;">
-                                <span>🚚 Estimasi Tiba:</span> <span>${escapeHtml(deliverySchedule)}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    <!-- Tabel Item -->
-                    <div style="margin-bottom:16px;">
-                        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                    <!-- Table of Items -->
+                    <div style="border-top:1px solid #1e293b;margin-bottom:28px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
                             <thead>
-                                <tr style="border-bottom:2px solid #e2e8f0;text-align:left;color:#475569;font-size:0.75rem;text-transform:uppercase;">
-                                    <th style="padding:6px 0;width:55%;">Item</th>
-                                    <th style="padding:6px 0;text-align:center;width:15%;">Qty</th>
-                                    <th style="padding:6px 0;text-align:right;width:30%;">Subtotal</th>
+                                <tr style="border-bottom:1.5px solid #1e293b;color:#1e293b;">
+                                    <th style="padding:10px 4px;text-align:left;font-weight:700;font-size:0.85rem;letter-spacing:0.04em;width:55%;">ITEM</th>
+                                    <th style="padding:10px 4px;text-align:center;font-weight:700;font-size:0.85rem;letter-spacing:0.04em;width:15%;">QTY</th>
+                                    <th style="padding:10px 4px;text-align:right;font-weight:700;font-size:0.85rem;letter-spacing:0.04em;width:30%;">SUBTOTAL</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${(order.items || []).map(item => `
-                                    <tr style="border-bottom:1px solid #f1f5f9;">
-                                        <td style="padding:8px 0;vertical-align:top;">
-                                            <div style="font-weight:600;color:#1e293b;">${escapeHtml(item.name)}</div>
-                                            <div style="font-size:0.75rem;color:#64748b;">@ ${formatRupiah(item.price || 0)}</div>
+                                    <tr style="border-bottom:1px solid #e2e8f0;">
+                                        <td style="padding:12px 4px;vertical-align:middle;">
+                                            <div style="font-weight:700;color:#1e293b;font-size:0.95rem;">${escapeHtml(item.name)}</div>
+                                            <div style="font-size:0.825rem;color:#64748b;margin-top:2px;">@ ${formatRupiah(item.price || 0)}</div>
                                         </td>
-                                        <td style="padding:8px 0;text-align:center;vertical-align:top;font-weight:600;color:#334155;">
+                                        <td style="padding:12px 4px;text-align:center;vertical-align:middle;font-weight:700;color:#1e293b;font-size:0.95rem;">
                                             ${item.qty || 1}
                                         </td>
-                                        <td style="padding:8px 0;text-align:right;vertical-align:top;font-weight:700;color:#0f172a;">
+                                        <td style="padding:12px 4px;text-align:right;vertical-align:middle;font-weight:700;color:#1e293b;font-size:0.95rem;">
                                             ${formatRupiah((item.price || 0) * (item.qty || 1))}
                                         </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
+                            <tfoot>
+                                <!-- Subtotal Belanja -->
+                                <tr style="border-bottom:1px solid #e2e8f0;">
+                                    <td colspan="2" style="padding:12px 4px;font-weight:600;color:#1e293b;">Subtotal Belanja</td>
+                                    <td style="padding:12px 4px;text-align:right;font-weight:700;color:#1e293b;">${formatRupiah(order.totalPrice || 0)}</td>
+                                </tr>
+                                <!-- Ongkos Kirim -->
+                                <tr style="border-bottom:1px solid #e2e8f0;">
+                                    <td colspan="2" style="padding:12px 4px;font-weight:600;color:#1e293b;">Ongkos Kirim (Internal Kemnaker)</td>
+                                    <td style="padding:12px 4px;text-align:right;font-weight:700;color:#1e293b;">GRATIS</td>
+                                </tr>
+                                <!-- Total Pembayaran -->
+                                <tr style="border-bottom:1.5px solid #1e293b;">
+                                    <td colspan="2" style="padding:14px 4px;font-weight:700;color:#1e293b;font-size:1rem;">Total Pembayaran</td>
+                                    <td style="padding:14px 4px;text-align:right;font-weight:800;color:#2563eb;font-size:1.05rem;">${formatRupiah(order.totalPrice || 0)}</td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
 
-                    <!-- Total Perhitungan -->
-                    <div style="border-top:2px dashed #cbd5e1;padding-top:12px;margin-bottom:20px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:0.825rem;color:#64748b;">
-                            <span>Subtotal Belanja</span>
-                            <span>${formatRupiah(order.totalPrice || 0)}</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.825rem;color:#15803d;">
-                            <span>Ongkos Kirim (Internal Kemnaker)</span>
-                            <span style="font-weight:700;">GRATIS</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #e2e8f0;font-size:1.1rem;font-weight:800;color:#0f172a;">
-                            <span>Total Pembayaran</span>
-                            <span style="color:#2563eb;">${formatRupiah(order.totalPrice || 0)}</span>
-                        </div>
+                    <!-- Footer: Line & Centered Gratitude Text -->
+                    <div style="margin-top:40px;border-top:1px solid #1e293b;padding-top:16px;text-align:center;color:#1e293b;">
+                        <div style="font-weight:700;font-size:0.925rem;margin-bottom:3px;">Terima kasih atas pesanan Anda!</div>
+                        <div style="font-size:0.825rem;color:#64748b;">Lapak UMKM Pegawai Kemnaker • Jajan Tanpa Mikir Ongkir</div>
                     </div>
 
-                    <!-- Footer Nota -->
-                    <div style="text-align:center;padding-top:12px;border-top:1px dashed #cbd5e1;color:#64748b;font-size:0.75rem;line-height:1.4;">
-                        <div style="font-weight:600;color:#334155;margin-bottom:2px;">Terima kasih atas pesanan Anda! 🙏</div>
-                        <div>Lapak UMKM Pegawai Kemnaker • Jajan Tanpa Mikir Ongkir</div>
-                    </div>
                 </div>
 
                 <!-- Footer Modal (No Print) -->
                 <div class="no-print" style="padding:12px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
-                    <button id="btn-close-bottom" class="btn btn-secondary btn-sm" style="padding:7px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#ffffff;color:#334155;cursor:pointer;font-weight:600;">
+                    <button id="btn-close-bottom" class="btn btn-secondary btn-sm" style="padding:7px 16px;border-radius:6px;border:1px solid #cbd5e1;background:#ffffff;color:#334155;cursor:pointer;font-weight:600;">
                         Tutup
                     </button>
-                    <button id="btn-print-bottom" class="btn btn-primary btn-sm" style="padding:7px 18px;border-radius:8px;background:#2563eb;color:#ffffff;border:none;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px;">
+                    <button id="btn-print-bottom" class="btn btn-primary btn-sm" style="padding:7px 18px;border-radius:6px;background:#2563eb;color:#ffffff;border:none;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px;">
                         <i data-lucide="printer" style="width:16px;height:16px;"></i> Cetak Nota
                     </button>
                 </div>
@@ -274,11 +285,11 @@ _Terima kasih telah berbelanja di UMKM Kemnaker!_`;
         style.id = 'receipt-modal-styles';
         style.innerHTML = `
             @keyframes modalScale {
-                from { transform: scale(0.95); opacity: 0; }
+                from { transform: scale(0.96); opacity: 0; }
                 to { transform: scale(1); opacity: 1; }
             }
             @media print {
-                /* Sembunyikan semua elemen di luar area nota */
+                /* Sembunyikan semua elemen selain nota */
                 body * {
                     visibility: hidden !important;
                 }
@@ -311,10 +322,10 @@ _Terima kasih telah berbelanja di UMKM Kemnaker!_`;
                     top: 0 !important;
                     width: 100% !important;
                     max-width: 100% !important;
-                    padding: 0 !important;
+                    padding: 15mm 20mm !important;
                     margin: 0 !important;
                     background: white !important;
-                    color: black !important;
+                    color: #1e293b !important;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
                 }
@@ -322,8 +333,8 @@ _Terima kasih telah berbelanja di UMKM Kemnaker!_`;
                     display: none !important;
                 }
                 @page {
-                    size: auto;
-                    margin: 10mm;
+                    size: A4 portrait;
+                    margin: 0;
                 }
             }
         `;
@@ -360,7 +371,6 @@ _Terima kasih telah berbelanja di UMKM Kemnaker!_`;
             await navigator.clipboard.writeText(rawWaText);
             showToast('Teks nota berhasil disalin ke clipboard!', 'success');
         } catch (err) {
-            // Fallback copy
             const textarea = document.createElement('textarea');
             textarea.value = rawWaText;
             document.body.appendChild(textarea);
