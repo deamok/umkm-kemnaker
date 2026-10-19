@@ -2,6 +2,7 @@ import Store from '../store.js';
 import Auth from '../auth.js';
 import Router from '../router.js';
 import { formatRupiah, showToast, timeAgo, generateId, formatIndonesianDate, toISODateString, parseFlexibleDate } from '../utils.js';
+import { showReceiptModal } from '../components/receiptModal.js';
 
 const eselonData = {
     "Setjen": [
@@ -211,7 +212,12 @@ export async function render(params) {
                     <span class="badge px-2 py-1 text-sm font-semibold capitalize text-secondary border border-gray-200 bg-gray-100" style="font-size: 14px; border-radius: var(--radius-full);">${displayStatus}</span>
                 </td>
                 <td class="text-center" style="padding: 6px;">
-                    <button class="btn btn-sm btn-outline text-sm">Detail <i data-lucide="chevron-down" class="w-4 h-4 inline"></i></button>
+                    <div class="flex items-center justify-center gap-1">
+                        <button class="btn-receipt-order btn btn-sm btn-outline text-sm px-2 py-1" data-id="${order.id}" title="Cetak Nota" onclick="event.stopPropagation();">
+                            <i data-lucide="receipt" class="w-4 h-4 text-primary"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline text-sm">Detail <i data-lucide="chevron-down" class="w-4 h-4 inline"></i></button>
+                    </div>
                 </td>
             </tr>
             <tr class="hidden bg-gray-50 border-b">
@@ -275,6 +281,9 @@ export async function render(params) {
                                 ${order.status === 'processing' ? `<button class="btn btn-sm btn-primary btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="shipped">Kirim</button>` : ''}
                                 ${order.status === 'shipped' ? `<button class="btn btn-sm btn-success btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="completed">Selesai</button>` : ''}
                                 ${(order.status === 'pending' || order.status === 'processing') ? `<button class="btn btn-sm btn-danger btn-update-status text-sm px-3 py-1.5" data-id="${order.id}" data-status="cancelled">Batal</button>` : ''}
+                                <button class="btn-receipt-order btn btn-sm btn-outline text-sm px-3 py-1.5 flex items-center gap-1" data-id="${order.id}">
+                                    <i data-lucide="receipt" class="w-4 h-4 inline"></i> Cetak Nota
+                                </button>
                             </div>
                             </div>
                         </div>
@@ -911,6 +920,15 @@ export async function afterRender(params) {
     document.querySelectorAll('.delivery-time-input').forEach(input => {
         input.addEventListener('change', (e) => {
             checkDeliveryInputs(e.target.dataset.orderId, e.target);
+        });
+    });
+
+    // Receipt / Nota
+    document.querySelectorAll('.btn-receipt-order').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = e.currentTarget.dataset.id;
+            showReceiptModal(id);
         });
     });
 
