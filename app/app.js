@@ -19,6 +19,7 @@ import * as ProfilePage from './pages/profile.js';
 import * as ChatsPage from './pages/chats.js';
 import * as ChatRoomPage from './pages/chatRoom.js';
 import * as UploadQrisPage from './pages/uploadQris.js';
+import * as BayarQrisPage from './pages/bayarQris.js';
 
 // Initialize Store and Global Components
 Store.init();
@@ -63,6 +64,7 @@ const routes = {
   '/chats': createRoute(ChatsPage),
   '/chat/:id': createRoute(ChatRoomPage),
   '/kirim-qris': createRoute(UploadQrisPage),
+  '/bayar-qris': createRoute(BayarQrisPage),
 };
 
 // Start router

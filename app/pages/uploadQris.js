@@ -275,12 +275,12 @@ export async function afterRender(params) {
             const cleanBase64 = compressedBase64.includes(',') ? compressedBase64.split(',')[1] : compressedBase64;
             const totalPriceFormatted = formatRupiah(order.totalPrice);
 
-            const sendMediaWithTimeout = async (targetPhone, captionText) => {
+            const sendTextWithTimeout = async (targetPhone, textMessage) => {
                 const p = formatWAPhone(targetPhone);
                 const controller = new AbortController();
                 const timer = setTimeout(() => controller.abort(), 15000);
                 try {
-                    const res = await fetch(`${EVOLUTION_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+                    const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -288,10 +288,8 @@ export async function afterRender(params) {
                         },
                         body: JSON.stringify({
                             number: p,
-                            mediaMessage: {
-                                mediatype: 'image',
-                                caption: captionText,
-                                media: cleanBase64
+                            textMessage: {
+                                text: textMessage
                             }
                         }),
                         signal: controller.signal
@@ -300,46 +298,55 @@ export async function afterRender(params) {
                     return res;
                 } catch (e) {
                     clearTimeout(timer);
-                    console.warn(`Gagal mengirim WA media ke ${p}:`, e);
+                    console.warn(`Gagal mengirim WA text ke ${p}:`, e);
                     return null;
                 }
             };
 
             const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-            // A. Kirim ke WhatsApp Pembeli
+            // A. Kirim notifikasi teks resmi dengan tautan QRIS ke WhatsApp Pembeli
             if (buyerPhone) {
-                const buyerCaption = 
+                const buyerMessage = 
 `📱 *QRIS PEMBAYARAN - TERASMOWI*
 ━━━━━━━━━━━━━━━━━━━━
 📋 *No. Pesanan:* ${orderId}
-💰 *Total Tagihan:* *${totalPriceFormatted}*
+💰 *Total Tagihan Pas:* *${totalPriceFormatted}*
 
-Halo Kak *${buyerName}*, berikut kode QRIS dengan nominal pas *${totalPriceFormatted}* untuk pesanan Kakak.
+Halo Kak *${buyerName}*, kode QRIS tagihan pas untuk pesanan Kakak telah siap.
 
-Silakan scan atau simpan kode QRIS di atas untuk melakukan pembayaran ya Kak. 
-Setelah pembayaran berhasil, pesanan Kakak akan segera disiapkan dan diantar. Terima kasih banyak! 🙏
+Silakan klik tautan resmi di bawah ini untuk melihat dan scan kode QRIS:
+👉 https://umkm-kemnaker.vercel.app/#/bayar-qris?orderId=${orderId}
 
-Pantau pesanan Kakak di sini:
-🔗 https://umkm-kemnaker.vercel.app/#/orders`;
+Setelah melakukan pembayaran via m-Banking atau E-Wallet, pesanan Kakak akan segera diantar.
 
-                await sendMediaWithTimeout(buyerPhone, buyerCaption);
+Pantau status pesanan Kakak:
+🔗 https://umkm-kemnaker.vercel.app/#/orders
+
+Terima kasih banyak sudah jajan di TerasMOWI! 🙏`;
+
+                await sendTextWithTimeout(buyerPhone, buyerMessage);
                 await sleep(1500);
             }
 
-            // B. Kirim ke 3 Nomor Tim TerasMOWI
+            // B. Kirim notifikasi konfirmasi teks ke 3 Nomor Tim TerasMOWI
             const terasMOWIPhones = ['6285781335527', '6281289004462', '6289658107313'];
-            const teamCaption = 
+            const teamMessage = 
 `✅ *QRIS NOMINAL BERHASIL DIKIRIM KE PEMBELI!*
 ━━━━━━━━━━━━━━━━━━━━
 📋 *No. Pesanan:* ${orderId}
 👤 *Pembeli:* ${buyerName} ${buyerPhone ? `(${buyerPhone})` : ''}
 💰 *Total Nominal:* *${totalPriceFormatted}*
 
-Kode QRIS nominal telah berhasil dikirimkan ke WhatsApp pembeli. Mohon pantau mutasi m-banking dan siapkan pesanannya! 👍`;
+Tautan QRIS Pembeli:
+👉 https://umkm-kemnaker.vercel.app/#/bayar-qris?orderId=${orderId}
+
+Mohon pantau mutasi m-banking & siapkan pesanannya! 👍
+Pantau pesanan di dashboard:
+🔗 https://umkm-kemnaker.vercel.app/#/dashboard`;
 
             for (const phone of terasMOWIPhones) {
-                await sendMediaWithTimeout(phone, teamCaption);
+                await sendTextWithTimeout(phone, teamMessage);
                 await sleep(1500);
             }
 
@@ -352,7 +359,7 @@ Kode QRIS nominal telah berhasil dikirimkan ke WhatsApp pembeli. Mohon pantau mu
                 <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 10px; padding: 1rem; color: #047857;">
                     <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🎉</div>
                     <strong>Sukses Terkirim!</strong><br>
-                    Gambar QRIS nominal telah dikirimkan ke WhatsApp pembeli <strong>${escapeHtml(buyerName)}</strong> dan 3 nomor WhatsApp tim TerasMOWI.
+                    Notifikasi teks & tautan QRIS nominal telah berhasil dikirimkan ke WhatsApp pembeli <strong>${escapeHtml(buyerName)}</strong> dan 3 nomor WhatsApp tim TerasMOWI.
                 </div>
             `;
         } catch (err) {

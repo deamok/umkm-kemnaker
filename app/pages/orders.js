@@ -71,6 +71,20 @@ export async function render(params) {
                                 <h4 class="font-bold text-sm mb-2 text-gray-700">Pembayaran:</h4>
                                 <div class="text-sm space-y-1">
                                     <div><span class="text-gray-500">Metode:</span> <span class="font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50">${paymentMethodLabel}</span></div>
+                                    ${order.qrisNominalImage ? `
+                                        <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center shadow-sm">
+                                            <div class="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">📱 Kode QRIS Tagihan Pas</div>
+                                            <div class="text-xs text-emerald-700 mb-2">Total: <b class="text-sm text-gray-900">${formatRupiah(order.totalPrice)}</b></div>
+                                            <a href="#/bayar-qris?orderId=${order.id}" class="inline-block" title="Klik untuk membuka QRIS pembayaran">
+                                                <img src="${order.qrisNominalImage}" class="mx-auto rounded-lg shadow-sm border border-gray-200 hover:opacity-95 transition-opacity" style="max-height: 180px; max-width: 100%; object-fit: contain; background: #fff;" alt="QRIS Tagihan Pas">
+                                            </a>
+                                            <div class="mt-2">
+                                                <a href="#/bayar-qris?orderId=${order.id}" class="btn btn-sm btn-primary inline-flex items-center gap-1 text-xs py-1 px-3">
+                                                    Buka Halaman QRIS
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ` : ''}
                                     ${((order.paymentMethod === 'transfer' || order.paymentMethod === 'qris') && order.paymentProof) ? `
                                         <div class="mt-2">
                                             <div class="text-gray-500 mb-1">Bukti Bayar:</div>
