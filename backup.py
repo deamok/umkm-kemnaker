@@ -188,9 +188,9 @@ def create_full_backup():
         include_folders = ["app", "css", "img"]
         include_files = [
             "index.html", "Dockerfile", "docker-compose.yml", "nginx.conf",
-            "vercel.json", "README.md", "deploy.py", "deploy.ps1",
-            "jalankan_lokal.bat", "upload_ke_server.bat", "start_local.ps1",
-            "check_docker.py", "check_npm.py", ".dockerignore"
+            "vercel.json", "README.md", "deploy.py", "deploy.bat",
+            "jalankan_lokal.bat", "backup.py", "backup.bat",
+            "restore.py", "restore.bat", ".dockerignore", ".gitignore"
         ]
 
         for folder in include_folders:

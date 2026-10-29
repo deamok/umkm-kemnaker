@@ -1,13 +1,9 @@
-version: '3.8'
-
 services:
   elapak-web:
     build: .
     container_name: elapak-web
     ports:
-      - "8090:80"
+      - "8091:80"
     restart: unless-stopped
     environment:
       - NGINX_PORT=80
-
-
