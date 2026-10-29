@@ -683,6 +683,7 @@ export async function afterRender(params) {
 `🔔 *PERMINTAAN QRIS NOMINAL (TerasMOWI)*
 ━━━━━━━━━━━━━━━━━━━━
 📋 *No. Pesanan:* ${orderId}
+👤 *Pembeli:* ${buyerName}
 💰 *Total Bayar: Rp ${Number(totalPrice).toLocaleString('id-ID')}*
 ━━━━━━━━━━━━━━━━━━━━
 Silakan buat QRIS dengan nominal di atas, lalu kirimkan gambarnya melalui tautan berikut:
